@@ -43,6 +43,7 @@ const Hero = () => {
                  'Software Engineer', 2000,
                  'Machine Learning Engineer', 2000,
                  'Data Scientist', 2000,
+                 'Student', 2000, 
                ]}
                wrapper="span"
                speed={63}          // Lower = Slower typing

@@ -35,7 +35,7 @@ const Navbar = ({ onOpenBooking }) => {
                         onClick={onOpenBooking}
                         className="flex items-center gap-2 bg-carbon-primary/10 border border-carbon-primary/50 px-4 py-2 rounded text-carbon-primary font-bold text-sm hover:bg-carbon-primary hover:text-black transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]">
                         <Calendar size={16} />
-                        <span>INIT_MEETING</span>
+                        <span>BOOK AN APPOINTMENT</span>
                     </button>
                 </div>
 

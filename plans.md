@@ -104,10 +104,10 @@
 ## 6. Implementation Roadmap
 
 ### Phase 1: The Shell (Frontend Focus)
-* [ ] Initialize React + Vite project.
-* [ ] Configure Tailwind CSS.
-* [ ] Build "Landing Page" (Portfolio) with dummy data.
-* [ ] Build "Booking Modal" (The Form) with dummy data.
+* [x] Initialize React + Vite project.
+* [x] Configure Tailwind CSS.
+* [x] Build "Landing Page" (Portfolio) with dummy data.
+* [x] Build "Booking Modal" (The Form) with dummy data.
 
 ### Phase 2: The Engine (Backend Focus)
 * [ ] Initialize FastAPI.
