@@ -21,7 +21,7 @@ const workHistory = [
     date: "Incoming (Dec 2026 - Feb 2027)",
     icon: <Briefcase size={20} />,
     description: "Incoming intern in the D1 quantitative research team.",
-    tech: ["Quant Research", "Probability", "D1 Team"]
+    tech: ["Quant Research", "Probability", "D1 Team", "Machine Learning"]
   },
   {
     id: 'optiver-ambassador',
@@ -33,7 +33,7 @@ const workHistory = [
       "Lead Optiver's presence at UQ careers fairs and workshops.",
       "Serve as UQ liaison to convert student interest into candidate pipelines."
     ],
-    tech: ["Recruitment", "Public Speaking"]
+    tech: ["Recruitment", "Public Speaking", "Quantitative Finance"]
   },
   {
     id: 'optiver-futurefocus',
@@ -45,16 +45,16 @@ const workHistory = [
       "Selected as part of 50 candidates out of 5,000+ to participate in a series of exercises involving market making, volatility calculations, and software engineering design.",
       "Became the first candidate in Optiver history to be extended two offers from the program for both Software Engineering and Quantitative Research roles."
     ],
-    tech: ["Elite Program", "Quantitative Finance"]
+    tech: ["Elite Program", "Quantitative Finance", "Software Engineering"]
   },
   {
     id: 'svp-intern',
-    role: "Insolvency Intern",
+    role: "Law & Insolvency Intern",
     company: "SVPartners",
     date: "Feb 2026 - May 2026",
     icon: <Briefcase size={20} />,
     description: "Incoming Winter Insolvency Intern at SVPartners.",
-    tech: ["Insolvency", "Finance"]
+    tech: ["Insolvency", "Finance", "Law"]
   },
   {
     id: 'thiess-ds',
@@ -67,7 +67,7 @@ const workHistory = [
       "Conducted extensive data cleaning and feature engineering using PySpark, SQL, and Jupyter Notebooks, including joining disparate telemetry datasets and modelling sensor noise.",
       "Developed a linear model to correct timestamp misalignment, ensuring synchronisation across data sources."
     ],
-    tech: ["PySpark", "GMM", "IMM-EKF", "SQL"]
+    tech: ["PySpark", "GMM", "IMM-EKF", "SQL", "Feature Engineering", "Azure Databricks"]
   },
   {
     id: 'uq-research',
@@ -92,7 +92,7 @@ const workHistory = [
       "Built a Dockerised ROS2-Gazebo simulation environment enabling remote development and virtual testing, boosting testing availability by 80% and accelerating R&D deployment.",
       "Introduced a task-ranked project management system with strategic resource planning and regular stand-ups, eliminating missed deadlines"
     ],
-    tech: ["C++", "ROS2", "Docker", "TensorRT"]
+    tech: ["C++", "ROS2", "Docker", "TensorRT", "Python", "Project Management", "Nvidia"]
   },
   {
     id: 'uq-racing-swe',
@@ -128,7 +128,7 @@ const workHistory = [
     date: "Mar 2025 - Present",
     icon: <Users size={20} />,
     description: "Representing the university and EAIT faculty in school expos, talks and careers fairs.",
-    tech: ["Public Relations", "EAIT Faculty"]
+    tech: ["Public Relations"]
   }
 ];
 
@@ -145,7 +145,7 @@ const leadershipHistory = [
       "Assissted in the coordination of sponsorship negotiations and secured $30k+ in sponsorship (largest in society history).",
       "Engineered a new technical engagement strategy through the launch of industry-aligned hackathons and academic workshops, driving a measurable increase in member participation and student career-readiness"
     ],
-    tech: ["Leadership", "$30k Funding", "Strategy"]
+    tech: ["Leadership", "Event Management", "Sponsorship"]
   },
   {
     id: 'uqcs-treasurer',
@@ -158,7 +158,7 @@ const leadershipHistory = [
       "Achieved a 100% event sell-out rate by leveraging data-driven budget allocation for marketing and logistics, maximizing society visibility while maintaining high-quality member experiences.",
       "Designed a comprehensive fiscal reporting system to track expenditure across multiple departments, resulting in more optimal resource distribution and increased reinvestable capital for future club initiatives."
     ],
-    tech: ["Financial Modeling", "Budgeting"]
+    tech: ["Financial Modeling", "Budgeting", "Event Management"]
   },
   {
     id: 'uqcs-exec',
@@ -167,7 +167,7 @@ const leadershipHistory = [
     date: "Oct 2024 - May 2025",
     icon: <Users size={20} />,
     description: "Spearheaded operational logistics and digital broadcasting for large-scale technical events.",
-    tech: ["Logistics", "A/V Infrastructure"]
+    tech: ["Logistics", "A/V Infrastructure", "Event Management"]
   },
   {
     id: 'uq-fintech',
