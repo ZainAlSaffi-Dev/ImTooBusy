@@ -21,7 +21,7 @@ const Hero = () => {
           className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-carbon-primary/30 bg-carbon-primary/5 text-carbon-primary text-xs font-mono tracking-[0.2em]"
         >
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-          SYSTEM ONLINE: ST LUCIA, QLD
+          SYSTEM ONLINE: BRISBANE, QLD
         </motion.div>
         
         {/* Name */}
@@ -45,8 +45,8 @@ const Hero = () => {
                  'Data Scientist', 2000,
                ]}
                wrapper="span"
-               speed={60}          // Lower = Slower typing
-               deletionSpeed={80}  // Lower = Slower deleting
+               speed={63}          // Lower = Slower typing
+               deletionSpeed={70}  // Lower = Slower deleting
                repeat={Infinity}
                cursor={true}
              />

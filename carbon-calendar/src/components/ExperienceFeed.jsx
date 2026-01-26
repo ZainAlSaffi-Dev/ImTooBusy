@@ -1,20 +1,31 @@
 import { Briefcase, Trophy, Code, GraduationCap, Users, TrendingUp, BookOpen } from 'lucide-react';
 
 const educationData = [
-  {
+
+
+    {
+        id: 'uq-degree',
+        role: "Master of Engineering",
+        company: "The University of Queensland",
+        date: "Feb 2024 - June 2029",
+        icon: <BookOpen size={24} />,
+        description: "Specializing in Embedded Software and Machine Learning.",
+        tech: ["GPA: 7.00/7.00", "Dean's Excellence Award 2025"]
+    },
+    {
     id: 'uq-degree',
-    role: "Bachelor of Engineering (Honours) / Master of Engineering",
+    role: "Bachelor of Engineering (Honours)",
     company: "The University of Queensland",
-    date: "Feb 2024 - Nov 2028",
+    date: "Feb 2024 - June 2029",
     icon: <BookOpen size={24} />,
     description: "Specializing in Embedded Software and Machine Learning.",
-    tech: ["GPA: 7.00/7.00", "Dean's Excellence Award 2025", "Dual Major"]
-  }
+    tech: ["GPA: 7.00/7.00", "Dean's Excellence Award 2025"]
+    }
 ];
 
 // 1. PROFESSIONAL EXPERIENCE (Jobs)
 const workHistory = [
-  {
+    {
     id: 'optiver-qr',
     role: "Quantitative Research Intern",
     company: "Optiver",
@@ -22,32 +33,32 @@ const workHistory = [
     icon: <Briefcase size={20} />,
     description: "Incoming intern in the D1 quantitative research team.",
     tech: ["Quant Research", "Probability", "D1 Team", "Machine Learning"]
-  },
-  {
+    },
+    {
     id: 'optiver-ambassador',
     role: "Campus Ambassador",
     company: "Optiver",
     date: "Nov 2025 - Present",
     icon: <Users size={20} />,
     description: [
-      "Lead Optiver's presence at UQ careers fairs and workshops.",
-      "Serve as UQ liaison to convert student interest into candidate pipelines."
+        "Lead Optiver's presence at UQ careers fairs and workshops.",
+        "Serve as UQ liaison to convert student interest into candidate pipelines."
     ],
     tech: ["Recruitment", "Public Speaking", "Quantitative Finance"]
-  },
-  {
+    },
+    {
     id: 'optiver-futurefocus',
     role: "Future Focus Program",
     company: "Optiver",
     date: "Nov 2025 - Present",
     icon: <TrendingUp size={20} />,
     description: [
-      "Selected as part of 50 candidates out of 5,000+ to participate in a series of exercises involving market making, volatility calculations, and software engineering design.",
-      "Became the first candidate in Optiver history to be extended two offers from the program for both Software Engineering and Quantitative Research roles."
+        "Selected as part of 50 candidates out of 5,000+ to participate in a series of exercises involving market making, volatility calculations, and software engineering design.",
+        "Became the first candidate in Optiver history to be extended two offers from the program for both Software Engineering and Quantitative Research roles."
     ],
     tech: ["Elite Program", "Quantitative Finance", "Software Engineering"]
-  },
-  {
+    },
+    {
     id: 'svp-intern',
     role: "Law & Insolvency Intern",
     company: "SVPartners",
@@ -55,46 +66,46 @@ const workHistory = [
     icon: <Briefcase size={20} />,
     description: "Incoming Winter Insolvency Intern at SVPartners.",
     tech: ["Insolvency", "Finance", "Law"]
-  },
-  {
+    },
+    {
     id: 'thiess-ds',
     role: "Data Science Intern",
     company: "Thiess",
     date: "Dec 2024 - Feb 2025",
     icon: <Code size={20} />,
     description: [
-      "Developed a statistical learning state machine using Gaussian Mixture Models and IMM-EKF for real-time truck operation classification and sensor fusion, enhancing reliability and reducing costs by 20%.",
-      "Conducted extensive data cleaning and feature engineering using PySpark, SQL, and Jupyter Notebooks, including joining disparate telemetry datasets and modelling sensor noise.",
-      "Developed a linear model to correct timestamp misalignment, ensuring synchronisation across data sources."
+        "Developed a statistical learning state machine using Gaussian Mixture Models and IMM-EKF for real-time truck operation classification and sensor fusion, enhancing reliability and reducing costs by 20%.",
+        "Conducted extensive data cleaning and feature engineering using PySpark, SQL, and Jupyter Notebooks, including joining disparate telemetry datasets and modelling sensor noise.",
+        "Developed a linear model to correct timestamp misalignment, ensuring synchronisation across data sources."
     ],
-    tech: ["PySpark", "GMM", "IMM-EKF", "SQL", "Feature Engineering", "Azure Databricks"]
-  },
-  {
+    tech: ["PySpark", "Statistics", "Probability Theory","SQL", "Feature Engineering", "Azure Databricks"]
+    },
+    {
     id: 'uq-research',
     role: "Research Assistant",
     company: "University of Queensland",
     date: "Oct 2025 - Present",
     icon: <GraduationCap size={20} />,
     description: [
-      "Collecting and structuring Facebook group data using Meta's Content Library API for sentiment analysis of offshore wind projects.",
-      "Designed NLP pipeline compliant with Privacy Act."
+        "Collecting and structuring Facebook group data using Meta's Content Library API for sentiment analysis of offshore wind projects.",
+        "Designed NLP pipeline compliant with Privacy Act."
     ],
     tech: ["Python", "NLP", "Meta API", "Data Pipelines"]
-  },
-  {
+    },
+    {
     id: 'uq-racing-lead',
     role: "Lead Software Engineer",
     company: "UQ Racing",
     date: "Nov 2024 - June 2025",
     icon: <Code size={20} />,
     description: [
-      "Led ROS-to-ROS2 migration in Python and C++, integrating TensorRT-quantised YOLOv11 for faster, more accurate cone detection in real-time autonomous navigation.",
-      "Built a Dockerised ROS2-Gazebo simulation environment enabling remote development and virtual testing, boosting testing availability by 80% and accelerating R&D deployment.",
-      "Introduced a task-ranked project management system with strategic resource planning and regular stand-ups, eliminating missed deadlines"
+        "Led ROS-to-ROS2 migration in Python and C++, integrating TensorRT-quantised YOLOv11 for faster, more accurate cone detection in real-time autonomous navigation.",
+        "Built a Dockerised ROS2-Gazebo simulation environment enabling remote development and virtual testing, boosting testing availability by 80% and accelerating R&D deployment.",
+        "Introduced a task-ranked project management system with strategic resource planning and regular stand-ups, eliminating missed deadlines"
     ],
     tech: ["C++", "ROS2", "Docker", "TensorRT", "Python", "Project Management", "Nvidia"]
-  },
-  {
+    },
+    {
     id: 'uq-racing-swe',
     role: "Software Engineer",
     company: "UQ Racing",
@@ -102,8 +113,8 @@ const workHistory = [
     icon: <Code size={20} />,
     description: "Developed path planning algorithms using a perception stack integrating YOLOv8, Lidar, and INS data with Delaunay Triangulation.",
     tech: ["YOLOv8", "Lidar", "Path Planning"]
-  },
-  {
+    },
+    {
     id: 'uq-tutor',
     role: "Casual Academic Tutor",
     company: "University of Queensland",
@@ -111,8 +122,8 @@ const workHistory = [
     icon: <GraduationCap size={20} />,
     description: "Instructing 20+ students weekly in COMP3710 (Pattern Recognition and Analysis) on machine and deep learning models.",
     tech: ["Teaching", "Deep Learning", "COMP3710"]
-  },
-  {
+    },
+    {
     id: 'uq-ambassador-services',
     role: "Student Services Ambassador",
     company: "University of Queensland",
@@ -120,8 +131,8 @@ const workHistory = [
     icon: <Users size={20} />,
     description: "Assisting students with course selection and navigating UQ's proprietary software for enrollments.",
     tech: ["Student Services", "Administration"]
-  },
-  {
+    },
+    {
     id: 'uq-ambassador-future',
     role: "Future Students Ambassador",
     company: "University of Queensland",
@@ -129,7 +140,7 @@ const workHistory = [
     icon: <Users size={20} />,
     description: "Representing the university and EAIT faculty in school expos, talks and careers fairs.",
     tech: ["Public Relations"]
-  }
+    }
 ];
 
 // 2. LEADERSHIP & COMMUNITY (Societies)
