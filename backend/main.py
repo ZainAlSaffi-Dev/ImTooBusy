@@ -121,3 +121,13 @@ def cancel_booking(booking_id: int, req: CancelRequest):
     print(f"--- EMAIL TO {booking['email']}: Meeting Cancelled due to {req.reason} ---")
     
     return {"success": True}
+
+
+@app.get("/api/admin/blocks")
+def get_blocks():
+    return database.get_all_blocks()
+
+@app.delete("/api/admin/blocks/{block_id}")
+def unblock_slot(block_id: int):
+    database.delete_block(block_id)
+    return {"success": True}

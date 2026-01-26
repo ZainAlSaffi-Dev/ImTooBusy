@@ -1,23 +1,31 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, Calendar, AlertOctagon, X } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Calendar, AlertOctagon, X, ShieldAlert, Trash2, List } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [bookings, setBookings] = useState([]);
+  const [blocks, setBlocks] = useState([]);
+  const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'blocks'
   
   // CANCELLATION STATE
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
-  const [blockSlot, setBlockSlot] = useState(false); // Default: Release the slot
+  const [blockSlot, setBlockSlot] = useState(false);
 
   useEffect(() => {
-    fetchBookings();
+    fetchData();
   }, []);
 
-  const fetchBookings = async () => {
-    const res = await fetch('http://127.0.0.1:8000/api/admin/bookings');
-    const data = await res.json();
-    setBookings(data);
+  const fetchData = async () => {
+    // Fetch Bookings
+    const resBookings = await fetch('http://127.0.0.1:8000/api/admin/bookings');
+    const dataBookings = await resBookings.json();
+    setBookings(dataBookings);
+
+    // Fetch Blocks
+    const resBlocks = await fetch('http://127.0.0.1:8000/api/admin/blocks');
+    const dataBlocks = await resBlocks.json();
+    setBlocks(dataBlocks);
   };
 
   const updateStatus = async (id, status) => {
@@ -26,13 +34,13 @@ const AdminDashboard = () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })
     });
-    fetchBookings(); 
+    fetchData(); 
   };
 
   const initiateCancel = (booking) => {
       setSelectedBooking(booking);
       setCancelReason("Unforeseen scheduling conflict");
-      setBlockSlot(false); // Default to releasing the slot
+      setBlockSlot(false);
       setCancelModalOpen(true);
   };
 
@@ -46,7 +54,16 @@ const AdminDashboard = () => {
       });
       
       setCancelModalOpen(false);
-      fetchBookings();
+      fetchData();
+  };
+
+  const deleteBlock = async (id) => {
+      if(!confirm("Are you sure you want to unblock this time slot?")) return;
+
+      await fetch(`http://127.0.0.1:8000/api/admin/blocks/${id}`, {
+          method: 'DELETE',
+      });
+      fetchData();
   };
 
   return (
@@ -55,38 +72,96 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* LEFT: REQUESTS */}
-        <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-400 flex items-center gap-2"><CheckCircle size={18}/> Incoming Requests</h2>
-            <div className="space-y-3">
-                {bookings.map((b) => (
-                    <div key={b.id} className="bg-white/5 border border-white/10 p-5 rounded-lg flex flex-col gap-3">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="text-lg font-bold text-white">{b.name}</h3>
-                                <p className="text-sm text-carbon-primary font-mono">{b.date} @ {b.time} ({b.duration}m)</p>
-                            </div>
-                            <span className={`px-2 py-1 text-xs font-bold rounded uppercase ${
-                                b.status === 'ACCEPTED' ? 'bg-green-500/20 text-green-400' :
-                                b.status === 'REJECTED' || b.status === 'CANCELLED' ? 'bg-red-500/20 text-red-400' :
-                                'bg-yellow-500/20 text-yellow-400'
-                            }`}>
-                                {b.status}
-                            </span>
-                        </div>
-                        <p className="text-sm text-gray-300 italic">"{b.topic}"</p>
-                        {b.status === 'PENDING' && (
-                            <div className="flex gap-2 pt-2 border-t border-white/5">
-                                <button onClick={() => updateStatus(b.id, 'ACCEPTED')} className="flex-1 py-2 bg-green-500/10 text-green-400 text-xs font-bold rounded hover:bg-green-500/20">ACCEPT</button>
-                                <button onClick={() => updateStatus(b.id, 'REJECTED')} className="flex-1 py-2 bg-red-500/10 text-red-400 text-xs font-bold rounded hover:bg-red-500/20">REJECT</button>
-                            </div>
-                        )}
-                    </div>
-                ))}
+        {/* LEFT PANEL: TABBED INTERFACE */}
+        <div className="flex flex-col gap-4">
+            
+            {/* TAB SWITCHER */}
+            <div className="flex gap-4 border-b border-white/10 pb-4">
+                <button 
+                    onClick={() => setActiveTab('requests')}
+                    className={`flex items-center gap-2 pb-2 text-sm font-bold uppercase transition-all ${
+                        activeTab === 'requests' 
+                        ? 'text-carbon-primary border-b-2 border-carbon-primary' 
+                        : 'text-gray-500 hover:text-white'
+                    }`}
+                >
+                    <List size={18}/> Incoming Requests
+                </button>
+                
+                <button 
+                    onClick={() => setActiveTab('blocks')}
+                    className={`flex items-center gap-2 pb-2 text-sm font-bold uppercase transition-all ${
+                        activeTab === 'blocks' 
+                        ? 'text-red-500 border-b-2 border-red-500' 
+                        : 'text-gray-500 hover:text-white'
+                    }`}
+                >
+                    <ShieldAlert size={18}/> Blocked Zones
+                </button>
             </div>
+
+            {/* TAB CONTENT: REQUESTS */}
+            {activeTab === 'requests' && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-left-4">
+                    {bookings.map((b) => (
+                        <div key={b.id} className="bg-white/5 border border-white/10 p-5 rounded-lg flex flex-col gap-3">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">{b.name}</h3>
+                                    <p className="text-sm text-carbon-primary font-mono">{b.date} @ {b.time} ({b.duration}m)</p>
+                                </div>
+                                <span className={`px-2 py-1 text-xs font-bold rounded uppercase ${
+                                    b.status === 'ACCEPTED' ? 'bg-green-500/20 text-green-400' :
+                                    b.status === 'REJECTED' || b.status === 'CANCELLED' ? 'bg-red-500/20 text-red-400' :
+                                    'bg-yellow-500/20 text-yellow-400'
+                                }`}>
+                                    {b.status}
+                                </span>
+                            </div>
+                            <p className="text-sm text-gray-300 italic">"{b.topic}"</p>
+                            {b.status === 'PENDING' && (
+                                <div className="flex gap-2 pt-2 border-t border-white/5">
+                                    <button onClick={() => updateStatus(b.id, 'ACCEPTED')} className="flex-1 py-2 bg-green-500/10 text-green-400 text-xs font-bold rounded hover:bg-green-500/20">ACCEPT</button>
+                                    <button onClick={() => updateStatus(b.id, 'REJECTED')} className="flex-1 py-2 bg-red-500/10 text-red-400 text-xs font-bold rounded hover:bg-red-500/20">REJECT</button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* TAB CONTENT: BLOCKS */}
+            {activeTab === 'blocks' && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-right-4">
+                    {blocks.length === 0 ? (
+                        <div className="text-gray-500 italic text-center py-10">No active blocks.</div>
+                    ) : (
+                        blocks.map((block) => (
+                            <div key={block.id} className="bg-red-500/5 border border-red-500/20 p-5 rounded-lg flex items-center justify-between group">
+                                <div>
+                                    <div className="text-red-400 font-bold flex items-center gap-2">
+                                        <ShieldAlert size={16}/> {block.date}
+                                    </div>
+                                    <div className="text-white text-lg font-mono">
+                                        {block.start_time} - {block.end_time}
+                                    </div>
+                                    <div className="text-sm text-gray-500">Reason: {block.reason}</div>
+                                </div>
+                                <button 
+                                    onClick={() => deleteBlock(block.id)}
+                                    className="p-3 bg-red-500/10 text-red-500 rounded hover:bg-red-500 hover:text-white transition-all"
+                                    title="Unblock this slot"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
         </div>
 
-        {/* RIGHT: SCHEDULE & CANCEL LOGIC */}
+        {/* RIGHT PANEL: SCHEDULE (Always Visible) */}
         <div className="space-y-4">
              <h2 className="text-xl font-bold text-gray-400 flex items-center gap-2"><Calendar size={18}/> Upcoming Schedule</h2>
              
@@ -110,7 +185,6 @@ const AdminDashboard = () => {
                                             <div className="text-carbon-primary">{b.name}</div>
                                             <div className="text-sm text-gray-500">{b.duration} mins • {b.email}</div>
                                         </div>
-                                        {/* CANCEL BUTTON (Visible on Hover) */}
                                         <button 
                                             onClick={() => initiateCancel(b)}
                                             className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/30 rounded text-xs font-bold hover:bg-red-500 hover:text-white"

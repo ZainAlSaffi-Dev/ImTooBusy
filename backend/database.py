@@ -102,3 +102,19 @@ def add_block(date, start_time, end_time, reason):
     cursor.execute('INSERT INTO blocks (date, start_time, end_time, reason) VALUES (?, ?, ?, ?)', (date, start_time, end_time, reason))
     conn.commit()
     conn.close()
+
+def get_all_blocks():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    # Order by date descending (newest blocks first)
+    cursor.execute('SELECT * FROM blocks ORDER BY date DESC, start_time ASC')
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"id": r[0], "date": r[1], "start_time": r[2], "end_time": r[3], "reason": r[4]} for r in rows]
+
+def delete_block(block_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM blocks WHERE id = ?', (block_id,))
+    conn.commit()
+    conn.close()
