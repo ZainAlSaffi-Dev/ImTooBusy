@@ -64,7 +64,7 @@ const Hero = () => {
             <span className="mx-3 text-carbon-primary">|</span>
             <span className="text-white hover:text-carbon-primary transition-colors">DEEP LEARNING</span>
             <span className="mx-3 text-carbon-primary">|</span>
-            <span className="text-white hover:text-carbon-primary transition-colors">SYSTEM DESIGN</span>
+            <span className="text-white hover:text-carbon-primary transition-colors">SOFTWARE ENGINEERING</span>
         </motion.p>
 
       </div>
