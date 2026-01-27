@@ -7,6 +7,7 @@ charset-normalizer==3.4.4
 click
 cryptography==46.0.3
 dnspython
+discord.py
 ecdsa==0.19.1
 email-validator
 fastapi
