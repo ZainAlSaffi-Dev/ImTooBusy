@@ -2,6 +2,7 @@ annotated-doc
 annotated-types
 anyio
 certifi
+discord.py
 cffi==2.0.0
 charset-normalizer==3.4.4
 click
