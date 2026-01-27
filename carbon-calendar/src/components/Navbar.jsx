@@ -27,8 +27,14 @@ const Navbar = ({ onOpenBooking }) => {
 
                 {/* Navigation Links (The HUD Buttons) */}
                 <div className="hidden md:flex items-center gap-8">
-                    <NavLink icon={<Code size={18} />} text="PROJECTS" />
-                    <NavLink icon={<User size={18} />} text="ABOUT" />
+                    <a href="#projects" className="flex items-center gap-2 text-carbon-text/70 hover:text-carbon-primary transition-colors text-sm font-medium tracking-wide">
+                        <Code size={18} />
+                        <span>PROJECTS</span>
+                    </a>
+                    <a href="#about" className="flex items-center gap-2 text-carbon-text/70 hover:text-carbon-primary transition-colors text-sm font-medium tracking-wide">
+                        <User size={18} />
+                        <span>ABOUT</span>
+                    </a>
                     
                     {/* The "Book" Button */}
                     <button 
