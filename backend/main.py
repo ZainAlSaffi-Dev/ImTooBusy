@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -18,22 +19,34 @@ AEST = pytz.timezone('Australia/Brisbane')
 STANDARD_HOURS = {"start": 9, "end": 21}    # Public
 FRIEND_HOURS = {"start": 8, "end": 22}      # VIP Link Only
 
-# --- THE FIX IS HERE ---
-# Use lifespan event handler instead of deprecated on_event
+# --- LIFESPAN MANAGER (Replaces on_event) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    # 1. Initialize Database
+    # --- STARTUP LOGIC ---
+    print("🚀 System Starting Up...")
+
+    # 1. Restore Google Secrets from Environment (Crucial for Railway Persistence)
+    if os.getenv("GOOGLE_CREDENTIALS_JSON"):
+        with open("credentials.json", "w") as f:
+            f.write(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+            print("✅ Restored credentials.json from Environment")
+            
+    if os.getenv("GOOGLE_TOKEN_JSON"):
+        with open("token.json", "w") as f:
+            f.write(os.getenv("GOOGLE_TOKEN_JSON"))
+            print("✅ Restored token.json from Environment")
+
+    # 2. Initialize Database
     database.init_db()
     
-    # 2. Wake up the Discord Bot in the background
-    print("🚀 Launching Discord Bot...")
+    # 3. Launch Discord Bot in Background
     asyncio.create_task(bot_service.start_bot())
+    print("🤖 Discord Bot Service Launched")
     
-    yield  # App runs here
+    yield  # Application runs here
     
-    # Shutdown (if needed in the future)
-    pass
+    # --- SHUTDOWN LOGIC ---
+    print("🛑 System Shutting Down...")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -47,13 +60,13 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # Use the list above
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
+# --- REQUEST MODELS ---
 class AdminLoginRequest(BaseModel):
     password: str
 
@@ -100,42 +113,30 @@ def is_overlapping(slot_iso, duration, occupied_slots):
 
 # --- API ENDPOINTS ---
 
-# 2. UPDATE CREATE_MEETING ENDPOINT
 @app.post("/api/request-meeting")
 async def create_meeting(request: MeetingRequest, req: Request):
     
     # --- SECURITY LEVEL 0: IP CHECK ---
     client_ip = req.client.host
     if database.is_ip_banned(client_ip):
-         # Return 403 Forbidden (or lie with 200 if you want to be sneaky)
          raise HTTPException(status_code=403, detail="Your access has been restricted.")
 
     # --- SECURITY LEVEL 1: HONEYPOT (BOT TRAP) ---
     if request.fax_number:
         print(f"🤖 BOT DETECTED: {request.email} from {client_ip}")
-        
-        # A: BAN THEM (10 Years)
         database.ban_ip(client_ip, "Honeypot Triggered", duration_minutes=5256000)
-        
-        # B: WIPE THEM (Delete any previous requests they might have made)
         deleted = database.wipe_troll_requests(request.email)
         print(f"💥 Nuclear Option: Deleted {deleted} requests from {request.email}")
-        
-        return {"success": True} # Lie to the bot
+        return {"success": True} 
 
     # --- SECURITY LEVEL 2: TROLL SHIELD ---
     is_friend = request.token and auth.verify_friend_token(request.token)
     
     if not is_friend:
         stats = database.check_spam_stats(request.email)
-        
-        # Rule A: Pending Flood
         if stats['pending'] >= 3:
             raise HTTPException(status_code=429, detail="Too many pending requests.")
-        
-        # Rule B: Rejection Timeout (24 Hour Ban)
         if stats['rejected'] >= 3:
-            # Auto-ban IP for 24 hours
             database.ban_ip(client_ip, "Troll Shield (3 Rejections)", duration_minutes=1440)
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in 24 hours.")
 
@@ -179,12 +180,10 @@ async def create_meeting(request: MeetingRequest, req: Request):
         "location_details": request.location_details
     }
     
-    # We wrap this in Try/Except so a Discord failure DOES NOT crash the booking
     try:
         await bot_service.bot_instance.send_booking_request(booking_data, new_id)
     except Exception as e:
         print(f"⚠️ Notification System Error: {e}")
-        # We continue anyway because the booking IS saved in the database
 
     return {"success": True}
 
@@ -208,7 +207,6 @@ def get_availability(start_date: str, end_date: str, duration: int, token: str =
     current = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
     now_aest = datetime.now(AEST)
-
     
     # Public = 24 Hours Notice. Friends = 30 Minutes Notice.
     notice_buffer = timedelta(hours=24) if not is_friend else timedelta(minutes=30)
@@ -218,16 +216,12 @@ def get_availability(start_date: str, end_date: str, duration: int, token: str =
         date_aest = AEST.localize(current)
         date_str = date_aest.strftime("%Y-%m-%d")
         
-        # We removed the old "7 day" block. Now we filter specific slots instead.
-        
         candidates = get_slots_for_day(date_aest, hours['start'], hours['end'], 15)
         
         # Time Barrier & Notice Period Check
         future_candidates = []
         for s in candidates:
             slot_dt = datetime.fromisoformat(s)
-            
-            # Check: Is this slot strictly AFTER our notice period?
             if slot_dt > earliest_booking_time:
                 future_candidates.append(s)
 
@@ -283,12 +277,10 @@ def cancel_booking(booking_id: int, req: CancelRequest):
     
     return {"success": True}
 
-## Freud Link
 @app.post("/api/admin/generate-friend-link")
 def generate_link():
     token = auth.create_friend_token()
-    return {"link": f"http://localhost:5173/?token={token}"}
-
+    return {"link": f"https://zainalsaffi.com/?token={token}"} # UPDATED TO PRODUCTION DOMAIN
 
 # 2. Add the Login Endpoint
 @app.post("/api/admin/login")

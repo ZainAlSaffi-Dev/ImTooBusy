@@ -1,7 +1,17 @@
 import sqlite3
+import os
 from datetime import datetime, timedelta
 
-DB_NAME = "carbon.db"
+# --- UPDATE START ---
+# 1. Define a persistent directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+
+# 2. Ensure the folder exists
+os.makedirs(DATA_DIR, exist_ok=True)
+
+# 3. Point the DB to 'data/carbon.db'
+DB_NAME = os.path.join(DATA_DIR, "carbon.db")
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
