@@ -1,7 +1,8 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime, timedelta
+from contextlib import asynccontextmanager
 import database
 import pytz
 import auth
@@ -11,7 +12,6 @@ from typing import Optional
 import asyncio
 import bot_service
 
-app = FastAPI()
 AEST = pytz.timezone('Australia/Brisbane')
 
 # CONFIG
@@ -19,15 +19,23 @@ STANDARD_HOURS = {"start": 9, "end": 17}    # Public
 FRIEND_HOURS = {"start": 8, "end": 22}      # VIP Link Only
 
 # --- THE FIX IS HERE ---
-# We change this to 'async' and create a background task for the bot
-@app.on_event("startup")
-async def startup():
+# Use lifespan event handler instead of deprecated on_event
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     # 1. Initialize Database
     database.init_db()
     
     # 2. Wake up the Discord Bot in the background
     print("🚀 Launching Discord Bot...")
     asyncio.create_task(bot_service.start_bot())
+    
+    yield  # App runs here
+    
+    # Shutdown (if needed in the future)
+    pass
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
@@ -43,7 +51,8 @@ class MeetingRequest(BaseModel):
     duration: int
     token: Optional[str] = None  
     location_type: str = "ONLINE"     
-    location_details: str = ""        
+    location_details: str = ""
+    fax_number: Optional[str] = None   
 
 class StatusUpdate(BaseModel): status: str
 
@@ -79,8 +88,43 @@ def is_overlapping(slot_iso, duration, occupied_slots):
 
 # 2. UPDATE CREATE_MEETING ENDPOINT
 @app.post("/api/request-meeting")
-async def create_meeting(request: MeetingRequest):
-    # ... (Date checks remain the same) ...
+async def create_meeting(request: MeetingRequest, req: Request):
+    
+    # --- SECURITY LEVEL 0: IP CHECK ---
+    client_ip = req.client.host
+    if database.is_ip_banned(client_ip):
+         # Return 403 Forbidden (or lie with 200 if you want to be sneaky)
+         raise HTTPException(status_code=403, detail="Your access has been restricted.")
+
+    # --- SECURITY LEVEL 1: HONEYPOT (BOT TRAP) ---
+    if request.fax_number:
+        print(f"🤖 BOT DETECTED: {request.email} from {client_ip}")
+        
+        # A: BAN THEM (10 Years)
+        database.ban_ip(client_ip, "Honeypot Triggered", duration_minutes=5256000)
+        
+        # B: WIPE THEM (Delete any previous requests they might have made)
+        deleted = database.wipe_troll_requests(request.email)
+        print(f"💥 Nuclear Option: Deleted {deleted} requests from {request.email}")
+        
+        return {"success": True} # Lie to the bot
+
+    # --- SECURITY LEVEL 2: TROLL SHIELD ---
+    is_friend = request.token and auth.verify_friend_token(request.token)
+    
+    if not is_friend:
+        stats = database.check_spam_stats(request.email)
+        
+        # Rule A: Pending Flood
+        if stats['pending'] >= 3:
+            raise HTTPException(status_code=429, detail="Too many pending requests.")
+        
+        # Rule B: Rejection Timeout (24 Hour Ban)
+        if stats['rejected'] >= 3:
+            # Auto-ban IP for 24 hours
+            database.ban_ip(client_ip, "Troll Shield (3 Rejections)", duration_minutes=1440)
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in 24 hours.")
+
     dt = datetime.fromisoformat(request.slot_iso)
     dt_aest = dt.astimezone(AEST)
     
@@ -177,18 +221,17 @@ def get_availability(start_date: str, end_date: str, duration: int, token: str =
 @app.patch("/api/admin/bookings/{booking_id}")
 def update_status(booking_id: int, update: StatusUpdate):
     database.update_booking_status(booking_id, update.status)
-    
-    # Fetch details so we know who to email
     booking = database.get_booking(booking_id)
 
     if update.status == "ACCEPTED":
-        # 1. Sync to Google Calendar (if set up)
-        gcal.create_google_event(booking)
-        # 2. Email the Client
+        # 1. Create Google Event & Save ID
+        event_id = gcal.create_google_event(booking)
+        if event_id:
+            database.update_google_event_id(booking_id, event_id)
+            
         notifications.send_acceptance_email(booking)
         
     elif update.status == "REJECTED":
-        # Email the Client
         notifications.send_rejection_email(booking)
         
     return {"success": True}
@@ -209,6 +252,11 @@ def cancel_booking(booking_id: int, req: CancelRequest):
     
     database.update_booking_status(booking_id, "CANCELLED")
     
+    # 1. Delete from Google Calendar if it exists
+    if booking.get('google_event_id'):
+        gcal.delete_google_event(booking['google_event_id'])
+
+    # 2. Block the slot locally if requested
     if req.block_slot:
         start_dt = datetime.strptime(booking['time'], "%H:%M")
         end_dt = start_dt + timedelta(minutes=booking['duration'])
