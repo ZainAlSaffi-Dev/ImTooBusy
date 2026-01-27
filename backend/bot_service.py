@@ -19,13 +19,13 @@ class BookingView(View):
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green, custom_id="accept_btn")
     async def accept_button(self, interaction: discord.Interaction, button: Button):
-        # 1. Acknowledge instantly so the user knows it clicked
+        # 1. Acknowledge instantly
         await interaction.response.defer()
         
         try:
             print(f"🔄 Processing acceptance for {self.booking_id}...")
 
-            # 2. Database Update (Fast enough to keep on main thread)
+            # 2. Database Update
             database.update_booking_status(self.booking_id, "ACCEPTED")
             booking = database.get_booking(self.booking_id)
             
@@ -33,20 +33,8 @@ class BookingView(View):
                 await interaction.followup.send("❌ Error: Booking lost.", ephemeral=True)
                 return
 
-            # 3. ⚡ THE FIX: Run Heavy Tasks in Background Threads ⚡
-            # This frees up the server to handle website traffic immediately
-            import gcal 
-            
-            # Run Google Sync in background
-            event_id = await asyncio.to_thread(gcal.create_google_event, booking)
-            
-            if event_id:
-                database.update_google_event_id(self.booking_id, event_id)
-            
-            # Run Email Sending in background (The slowest part!)
-            await asyncio.to_thread(notifications.send_acceptance_email, booking)
-
-            # 4. Construct the Link (Safe Logic)
+            # --- ⚡ UI UPDATE MOVED HERE ⚡ ---
+            # We calculate the link and update the message FIRST so it feels instant.
             link = notifications.MEETING_LINK
             if booking.get('location_type') == 'ONLINE':
                 if link and link.startswith("http"):
@@ -56,16 +44,38 @@ class BookingView(View):
             else:
                 join_info = f"📍 {booking.get('location_details')}"
 
-            # 5. Update Discord Message
+            # Update the message immediately to show "ACCEPTED"
             await interaction.message.edit(
                 content=f"✅ **ACCEPTED** by {interaction.user.name}\n{join_info}", 
                 view=None
             )
-            print("✅ Process Complete.")
+
+            # --- 3. HEAVY TASKS (Run in background AFTER UI update) ---
+            import gcal 
+            
+            # Use asyncio.gather to run GCal and Email at the same time (Parallel)
+            # This is optional but makes the background work faster.
+            print("⏳ Starting background sync...")
+            
+            # Define wrapper for GCal to handle the return value side-effect
+            def sync_gcal():
+                ev_id = gcal.create_google_event(booking)
+                if ev_id:
+                    database.update_google_event_id(self.booking_id, ev_id)
+                return ev_id
+
+            # Run both tasks concurrently
+            await asyncio.gather(
+                asyncio.to_thread(sync_gcal),
+                asyncio.to_thread(notifications.send_acceptance_email, booking)
+            )
+            
+            print("✅ Background Process Complete.")
 
         except Exception as e:
             print(f"CRITICAL ERROR: {e}")
-            await interaction.followup.send(f"⚠️ Error: {e}", ephemeral=True)
+            # Since we might have already edited the message, we send a followup
+            await interaction.followup.send(f"⚠️ Error during background sync: {e}", ephemeral=True)
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red, custom_id="reject_btn")
     async def reject_button(self, interaction: discord.Interaction, button: Button):
