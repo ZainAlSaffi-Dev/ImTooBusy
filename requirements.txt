@@ -1,0 +1,67 @@
+annotated-doc @ file:///home/task_176337172295408/conda-bld/annotated-doc_1763372655766/work
+annotated-types @ file:///home/task_176174487955274/conda-bld/annotated-types_1761744892998/work
+anyio @ file:///home/task_175862178814400/conda-bld/anyio_1758622418219/work
+certifi @ file:///home/task_176765899978398/croot/certifi_1767659142032/work/certifi
+cffi==2.0.0
+charset-normalizer==3.4.4
+click @ file:///home/task_176433223802040/conda-bld/click_1764332250813/work
+cryptography==46.0.3
+dnspython @ file:///home/task_176371823862131/conda-bld/dnspython_1763718251566/work
+ecdsa==0.19.1
+email-validator @ file:///home/task_175861018988329/conda-bld/email-validator-meta_1758610242908/work
+fastapi @ file:///home/task_176840111020479/croot/fastapi-split_1768401131930/work
+fastapi-cli @ file:///home/task_176837317677746/croot/fastapi-cli_1768373418246/work
+google-api-core==2.29.0
+google-api-python-client==2.188.0
+google-auth==2.48.0
+google-auth-httplib2==0.3.0
+google-auth-oauthlib==1.2.4
+googleapis-common-protos==1.72.0
+h11 @ file:///home/task_176193127072780/conda-bld/h11_1761931281921/work
+httpcore @ file:///croot/httpcore_1748526048470/work
+httplib2==0.31.2
+httptools @ file:///home/task_176363475657388/conda-bld/httptools_1763634768597/work
+httpx @ file:///home/task_176044736830261/conda-bld/httpx_1760447380560/work
+idna @ file:///home/task_176191177554882/conda-bld/idna_1761911981359/work
+Jinja2 @ file:///croot/jinja2_1741710844255/work
+markdown-it-py @ file:///home/task_176700162639026/croot/markdown-it-py_1767001647699/work
+MarkupSafe @ file:///croot/markupsafe_1738584038848/work
+mdurl @ file:///home/task_175855214286592/conda-bld/mdurl_1758552159735/work
+oauthlib==3.3.1
+proto-plus==1.27.0
+protobuf==6.33.4
+pyasn1==0.6.2
+pyasn1_modules==0.4.2
+pycparser==3.0
+pydantic @ file:///home/task_176408302881256/conda-bld/pydantic_1764083527488/work
+pydantic-extra-types @ file:///home/task_176830847162002/croot/pydantic-extra-types_1768308494356/work
+pydantic-settings @ file:///home/task_176416513218216/conda-bld/pydantic-settings_1764165145325/work
+pydantic_core @ file:///home/task_176400943780574/conda-bld/pydantic-core_1764009744472/work
+Pygments @ file:///home/task_176243120367123/conda-bld/pygments_1762431407417/work
+pyparsing==3.3.2
+python-dotenv @ file:///home/task_176855927346736/croot/python-dotenv_1768559688936/work
+python-jose==3.5.0
+python-multipart @ file:///croot/python-multipart_1743518669127/work
+pytz @ file:///croot/pytz_1752135852232/work
+PyYAML @ file:///home/task_176346544403961/conda-bld/pyyaml_1763465494824/work
+requests==2.32.5
+requests-oauthlib==2.0.0
+rich @ file:///home/task_176037557748473/conda-bld/rich_1760375635468/work
+rich-toolkit @ file:///home/task_176830855523291/croot/rich-toolkit_1768308578843/work
+rsa==4.9.1
+setuptools==80.9.0
+shellingham @ file:///home/task_176191209964862/conda-bld/shellingham_1761912204539/work
+six==1.17.0
+sniffio @ file:///home/task_176432905353501/conda-bld/sniffio_1764329151381/work
+starlette @ file:///home/task_175691048783986/conda-bld/starlette-recipe_1756910680295/work
+typer==0.20.0
+typer-slim==0.20.0
+typing-inspection @ file:///home/task_176061388633419/conda-bld/typing-inspection_1760614166163/work
+typing_extensions @ file:///croot/typing_extensions_1756280817316/work
+uritemplate==4.2.0
+urllib3==2.6.3
+uvicorn @ file:///home/task_176822564742281/croot/uvicorn-split_1768226426629/work
+uvloop @ file:///home/task_176217538989167/conda-bld/uvloop_1762175502859/work
+watchfiles @ file:///home/task_176798443705147/croot/watchfiles_1767984618114/work
+websockets @ file:///croot/websockets_1751974421031/work
+wheel==0.45.1

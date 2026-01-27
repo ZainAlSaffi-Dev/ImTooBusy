@@ -8,16 +8,15 @@ export default {
     extend: {
       colors: {
         carbon: {
-          bg: '#111111',       // Deep Asphalt
-          panel: '#1a1a1a',    // Lighter grey for cards
-          primary: '#00FFFF',  // Neon Cyan
-          secondary: '#FF9900', // Safety Orange
-          text: '#E0E0E0',     // Off-white
-          muted: '#555555',    // Grey text
+          bg: '#050505',       // Pure Void Black (Infinite Tsukuyomi vibes)
+          panel: '#120a1a',    // Very dark purple-grey for cards
+          primary: '#a855f7',  // Susanoo Purple (Glowing Violet)
+          secondary: '#e9d5ff', // Rinnegan Lavender (Pale, ghostly)
+          text: '#f3e8ff',     // Very light purple-white
+          muted: '#6b4c7d',    // Muted purple-grey for secondary text
         }
       },
       fontFamily: {
-        // We'll use the default sans for now, but you can swap this later
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
     },

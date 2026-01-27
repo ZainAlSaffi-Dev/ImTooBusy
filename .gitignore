@@ -205,3 +205,26 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# --- SECURITY (CRITICAL) ---
+.env
+backend/.env
+credentials.json
+token.json
+
+# --- DATA PRIVACY ---
+# Do not commit your actual bookings or client info!
+carbon.db
+backend/carbon.db
+*.sqlite3
+
+# --- SYSTEM JUNK ---
+__pycache__/
+*.py[cod]
+venv/
+.pytest_cache/
+node_modules/
+dist/
+.DS_Store
+.vscode/

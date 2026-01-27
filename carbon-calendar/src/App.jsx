@@ -1,28 +1,137 @@
-import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react'; // <--- Added useEffect
+import Navbar from './components/Navbar';
+import Hero from './components/Hero';
+import ExperienceFeed from './components/ExperienceFeed';
+import BookingModal from './components/BookingModal';
+import AdminDashboard from './components/AdminDashboard';
+import AdminLogin from './components/AdminLogin'; 
+import TerminalGate from './components/TerminalGate';
+import Projects from './components/Projects'; 
+import About from './components/About';      
 
-function App() {
+// Simple Footer Component
+const Footer = () => (
+  <footer className="py-8 border-t border-white/10 bg-black text-center text-gray-600 font-mono text-sm">
+    <p>CARBON SYSTEM // ZAIN_AL_SAFFI © 2026</p>
+    <p className="text-xs mt-2">Running on Railway // Built with React</p>
+  </footer>
+);
+
+// --- THE MAIN PORTFOLIO PAGE ---
+const PortfolioPage = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAboutUnlocked, setIsAboutUnlocked] = useState(false); 
+
+  // --- NEW LOGIC: FORCE SCROLL TO TOP ON REFRESH ---
+  useEffect(() => {
+    // 1. Tell the browser NOT to restore the scroll position automatically
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    // 2. Force the window to the very top immediately
+    window.scrollTo(0, 0);
+
+    // Optional: Clean up by restoring default behavior when leaving (not strictly necessary for this app)
+    return () => {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'auto';
+      }
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-carbon-bg relative overflow-hidden">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 selection:text-purple-200">
       
-      {/* Background Decorative Blob (The "Speed" Vibe) */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-carbon-primary/20 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2"></div>
+      <Navbar onOpenBooking={() => setIsModalOpen(true)} />
       
-      {/* The Glass Panel */}
-      <div className="relative z-10 w-96 p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg shadow-2xl">
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-carbon-primary to-blue-500 mb-2 italic">
-          CARBON
-        </h1>
-        <p className="text-carbon-muted mb-6">
-          Calendar Management System v1.0
-        </p>
+      <main className="relative">
         
-        <button className="w-full py-3 px-6 rounded-lg bg-carbon-primary text-black font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(0,255,255,0.5)] transition-all duration-300">
-          Initialize System
-        </button>
-      </div>
+        {/* 1. HERO */}
+        <div id="home">
+          <Hero />
+        </div>
 
+        {/* 2. THE TERMINAL GATE */}
+        <div className="relative z-30 bg-black">
+           <TerminalGate onUnlock={() => setIsAboutUnlocked(true)} />
+        </div>
+
+        {/* 3. ABOUT SECTION */}
+        <div id="about" className="relative z-20 bg-[#050505]">
+           <About isUnlocked={isAboutUnlocked} />
+        </div>
+
+        {/* 4. EXPERIENCE FEED */}
+        <div id="experience" className="relative z-10 bg-black">
+           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-12" />
+           <ExperienceFeed />
+        </div>
+
+        {/* 5. PROJECTS */}
+        <div id="projects" className="relative z-10 bg-[#080808]">
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
+            <Projects />
+        </div>
+
+      </main>
+
+      <Footer />
+
+      <BookingModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
-  )
+  );
+};
+
+// --- MAIN APP ROUTER ---
+function App() {
+  // Initialize state from localStorage so you stay logged in on refresh
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
+      return localStorage.getItem("carbon_admin_auth") === "true";
+  });
+
+  // Handler to set login state AND save it
+  const handleLogin = (status) => {
+      setIsAdminLoggedIn(status);
+      if (status) {
+          localStorage.setItem("carbon_admin_auth", "true");
+      } else {
+          localStorage.removeItem("carbon_admin_auth");
+      }
+  };
+
+  return (
+    <Router>
+      <Routes>
+        {/* Public Route: The Portfolio */}
+        <Route path="/" element={<PortfolioPage />} />
+        
+        {/* Login Route: Redirect to /admin if already logged in */}
+        <Route 
+          path="/login" 
+          element={
+            isAdminLoggedIn 
+              ? <Navigate to="/admin" replace /> 
+              : <AdminLogin onLogin={() => handleLogin(true)} />
+          } 
+        />
+        
+        {/* Admin Route: Protected */}
+        <Route 
+          path="/admin" 
+          element={
+            isAdminLoggedIn 
+              ? <AdminDashboard /> 
+              : <Navigate to="/login" replace />
+          } 
+        />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
