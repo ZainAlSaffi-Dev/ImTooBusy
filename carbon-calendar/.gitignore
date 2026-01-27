@@ -22,3 +22,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+
+# Database (Don't upload your actual bookings!)
+carbon.db
+
+# Environment Variables (SECRETS)
+.env
+
+# Google Calendar Credentials (SECRETS)
+credentials.json
+token.json
+
+# OS Junk
+.DS_Store

@@ -1,43 +1,58 @@
-import { X, Calendar, Clock, ArrowRight, ArrowLeft, CheckCircle, Globe, AlertTriangle, RefreshCcw } from 'lucide-react';
+import { X, Calendar, Clock, ArrowRight, ArrowLeft, CheckCircle, Globe, AlertTriangle, RefreshCcw, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const BookingModal = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
-  // STATE
-  const [step, setStep] = useState(1);
-  const [duration, setDuration] = useState(30);
-  const [weekOffset, setWeekOffset] = useState(0); 
-  const [availability, setAvailability] = useState({});
-  const [loading, setLoading] = useState(false);
+    if (!isOpen) return null;
   
-  // SELECTION STATE
-  const [selectedSlotISO, setSelectedSlotISO] = useState(null); 
-  const [displayDate, setDisplayDate] = useState(""); 
-  const [displayTime, setDisplayTime] = useState(""); 
-  
-  // MODE
-  const [customMode, setCustomMode] = useState(false);
-
-  const [formData, setFormData] = useState({ name: '', email: '', topic: '' });
-
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  // HELPER: Get dates for the currently viewed week
-  const getWeekDates = (offset) => {
-    const today = new Date();
-    const start = new Date(today);
-    start.setDate(today.getDate() + (offset * 7));
+    // STATE
+    const [step, setStep] = useState(1);
+    const [duration, setDuration] = useState(30);
+    const [weekOffset, setWeekOffset] = useState(0); 
+    const [availability, setAvailability] = useState({});
+    const [loading, setLoading] = useState(false);
     
+    // NEW: FRIEND TOKEN STATE
+    const [friendToken, setFriendToken] = useState(null);
+  
+    // SELECTION STATE
+    const [selectedSlotISO, setSelectedSlotISO] = useState(null); 
+    const [displayDate, setDisplayDate] = useState(""); 
+    const [displayTime, setDisplayTime] = useState(""); 
+    
+    // MODE
+    const [customMode, setCustomMode] = useState(false);
+    const [formData, setFormData] = useState({ name: '', email: '', topic: '' });
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
+    // 1. ON MOUNT: CHECK FOR FRIEND TOKEN IN URL
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      if (token) {
+          setFriendToken(token);
+          setCustomMode(true); // Auto-enable custom mode for friends
+          // Optional: Remove token from URL bar so it looks cleaner
+          window.history.replaceState({}, document.title, "/"); 
+      }
+    }, []);
+
+  // HELPER: Always fetch 5 valid business days (Skip Sat/Sun)
+  const getWeekDates = (offset) => {
     const dates = [];
-    for(let i=0; i<5; i++) { 
-        const d = new Date(start);
-        d.setDate(start.getDate() + i);
-        // Only add Mon-Fri (1-5)
-        const day = d.getDay();
+    let currentDate = new Date();
+    
+    // Jump forward by 'offset' weeks (7 days per offset)
+    currentDate.setDate(currentDate.getDate() + (offset * 7));
+
+    // Keep hunting for days until we have exactly 5
+    while (dates.length < 5) {
+        const day = currentDate.getDay();
+        // 0 = Sun, 6 = Sat. Only add if it's a weekday.
         if (day !== 0 && day !== 6) {
-             dates.push(d);
+            dates.push(new Date(currentDate));
         }
+        // Move iterator to the next day
+        currentDate.setDate(currentDate.getDate() + 1);
     }
     return dates;
   };
@@ -75,7 +90,13 @@ const BookingModal = ({ isOpen, onClose }) => {
         const mode = customMode ? 'custom' : 'standard';
         
         setLoading(true);
-        fetch(`http://127.0.0.1:8000/api/availability?start_date=${startStr}&end_date=${endStr}&duration=${duration}&mode=${mode}`)
+        // APPEND TOKEN TO URL
+        let url = `http://127.0.0.1:8000/api/availability?start_date=${startStr}&end_date=${endStr}&duration=${duration}&mode=${mode}`;
+        if (friendToken) {
+            url += `&token=${friendToken}`;
+        }
+
+        fetch(url)
             .then(res => res.json())
             .then(data => {
                 setAvailability(data);
@@ -83,7 +104,7 @@ const BookingModal = ({ isOpen, onClose }) => {
             })
             .catch(err => setLoading(false));
     }
-  }, [step, weekOffset, duration, customMode]);
+  }, [step, weekOffset, duration, customMode, friendToken]);
 
   const enableCustomMode = () => {
       setCustomMode(true);
@@ -110,7 +131,8 @@ const BookingModal = ({ isOpen, onClose }) => {
             email: formData.email,
             topic: formData.topic,
             slot_iso: selectedSlotISO, 
-            duration: duration
+            duration: duration,
+            token: friendToken
         };
 
         const response = await fetch('http://127.0.0.1:8000/api/request-meeting', {
@@ -192,20 +214,36 @@ const BookingModal = ({ isOpen, onClose }) => {
 
                 {/* EXIT CUSTOM MODE BANNER */}
                 {customMode && (
-                    <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded mb-4 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                            <AlertTriangle className="text-yellow-500 shrink-0" size={20} />
-                            <p className="text-sm text-yellow-200">
-                                <strong>Custom Mode Active:</strong> Showing extended hours. Requires 7-day notice.
-                            </p>
+                    friendToken ? (
+                        // OPTION A: FRIEND/VIP BANNER (Green/Cool)
+                        <div className="bg-green-500/10 border border-green-500/30 p-3 rounded mb-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                            <Zap className="text-green-500 shrink-0 fill-green-500/20" size={20} />
+                            <div className="flex-1">
+                                <p className="text-sm text-green-200 font-bold">
+                                    VIP ACCESS UNLOCKED
+                                </p>
+                                <p className="text-xs text-green-400/80">
+                                    Extended hours enabled. No waiting period required.
+                                </p>
+                            </div>
                         </div>
-                        <button 
-                            onClick={disableCustomMode}
-                            className="text-xs font-bold text-yellow-500 underline decoration-2 underline-offset-4 hover:text-white flex items-center gap-1 uppercase tracking-wide"
-                        >
-                            <RefreshCcw size={12} /> Switch to Standard
-                        </button>
-                    </div>
+                    ) : (
+                        // OPTION B: STANDARD CUSTOM BANNER (Yellow/Warning)
+                        <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded mb-4 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <AlertTriangle className="text-yellow-500 shrink-0" size={20} />
+                                <p className="text-sm text-yellow-200">
+                                    <strong>Custom Mode Active:</strong> Showing extended hours. Requires 7-day notice.
+                                </p>
+                            </div>
+                            <button 
+                                onClick={disableCustomMode}
+                                className="text-xs font-bold text-yellow-500 underline decoration-2 underline-offset-4 hover:text-white flex items-center gap-1 uppercase tracking-wide"
+                            >
+                                <RefreshCcw size={12} /> Switch to Standard
+                            </button>
+                        </div>
+                    )
                 )}
                 
                 {loading ? (
@@ -225,7 +263,7 @@ const BookingModal = ({ isOpen, onClose }) => {
                                     // FIXED STYLE:
                                     // 1. All days get bg-black/40 (darker contrast)
                                     // 2. Today gets a purple tint (bg-carbon-primary/5) + Glowing Border
-                                    className={`flex flex-col h-full rounded-lg border overflow-hidden relative transition-all ${
+                                    className={`flex-1 flex flex-col h-full rounded-lg border overflow-hidden relative transition-all min-w-[140px] ${
                                         today 
                                         ? 'border-carbon-primary bg-carbon-primary/5 shadow-[0_0_15px_rgba(168,85,247,0.15)] z-10' 
                                         : 'bg-black/40 border-white/5'
