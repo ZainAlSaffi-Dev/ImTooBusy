@@ -1,6 +1,6 @@
 import { X, Calendar, Clock, ArrowRight, ArrowLeft, CheckCircle, Globe, AlertTriangle, RefreshCcw, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
-
+import { API_BASE_URL } from '../config'; // <--- IMPORT THIS
 
 const BookingModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
@@ -93,7 +93,8 @@ const BookingModal = ({ isOpen, onClose }) => {
         
         setLoading(true);
         // APPEND TOKEN TO URL
-        let url = `http://127.0.0.1:8000/api/availability?start_date=${startStr}&end_date=${endStr}&duration=${duration}&mode=${mode}`;
+        // <--- UPDATED URL HERE
+        let url = `${API_BASE_URL}/api/availability?start_date=${startStr}&end_date=${endStr}&duration=${duration}&mode=${mode}`;
         if (friendToken) {
             url += `&token=${friendToken}`;
         }
@@ -141,7 +142,8 @@ const BookingModal = ({ isOpen, onClose }) => {
             fax_number: formData.fax_number || ""
         };
 
-        const response = await fetch('http://127.0.0.1:8000/api/request-meeting', {
+        // <--- UPDATED URL HERE
+        const response = await fetch(`${API_BASE_URL}/api/request-meeting`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)

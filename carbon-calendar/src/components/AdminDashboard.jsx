@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Calendar, AlertOctagon, X, ShieldAlert, Trash2, List, Link as LinkIcon, Copy } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 const AdminDashboard = () => {
   const [bookings, setBookings] = useState([]);
@@ -29,17 +30,17 @@ const AdminDashboard = () => {
   }, []);
 
   const fetchData = async () => {
-    const resBookings = await fetch('http://127.0.0.1:8000/api/admin/bookings');
+    const resBookings = await fetch(`${API_BASE_URL}/api/admin/bookings`);
     const dataBookings = await resBookings.json();
     setBookings(dataBookings);
 
-    const resBlocks = await fetch('http://127.0.0.1:8000/api/admin/blocks');
+    const resBlocks = await fetch(`${API_BASE_URL}/api/admin/blocks`);
     const dataBlocks = await resBlocks.json();
     setBlocks(dataBlocks);
   };
 
   const updateStatus = async (id, status) => {
-    await fetch(`http://127.0.0.1:8000/api/admin/bookings/${id}`, {
+    await fetch(`${API_BASE_URL}/api/admin/bookings/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
 
   const confirmCancel = async () => {
       if(!selectedBooking) return;
-      await fetch(`http://127.0.0.1:8000/api/admin/cancel/${selectedBooking.id}`, {
+      await fetch(`${API_BASE_URL}/api/admin/cancel/${selectedBooking.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reason: cancelReason, block_slot: blockSlot })
@@ -67,13 +68,13 @@ const AdminDashboard = () => {
 
   const deleteBlock = async (id) => {
       if(!confirm("Are you sure you want to unblock this time slot?")) return;
-      await fetch(`http://127.0.0.1:8000/api/admin/blocks/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/admin/blocks/${id}`, { method: 'DELETE' });
       fetchData();
   };
 
   // NEW: GENERATE FRIEND LINK
   const generateFriendLink = async () => {
-      const res = await fetch('http://127.0.0.1:8000/api/admin/generate-friend-link', { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/admin/generate-friend-link`, { method: 'POST' });
       const data = await res.json();
       setGeneratedLink(data.link);
       navigator.clipboard.writeText(data.link);

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 const AdminLogin = ({ onLogin }) => {
     const [password, setPassword] = useState("");
@@ -12,7 +13,8 @@ const AdminLogin = ({ onLogin }) => {
         setError(false);
 
         try {
-            const res = await fetch('http://127.0.0.1:8000/api/admin/login', {
+            // <--- UPDATED URL HERE
+            const res = await fetch(`${API_BASE_URL}/api/admin/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password })
