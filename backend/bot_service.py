@@ -19,26 +19,36 @@ class BookingView(View):
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green, custom_id="accept_btn")
     async def accept_button(self, interaction: discord.Interaction, button: Button):
+        # 1. Acknowledge instantly so the user knows it clicked
         await interaction.response.defer()
         
         try:
-            # 1. Update DB
+            print(f"🔄 Processing acceptance for {self.booking_id}...")
+
+            # 2. Database Update (Fast enough to keep on main thread)
             database.update_booking_status(self.booking_id, "ACCEPTED")
             booking = database.get_booking(self.booking_id)
             
-            # 2. Sync Google Calendar
+            if not booking:
+                await interaction.followup.send("❌ Error: Booking lost.", ephemeral=True)
+                return
+
+            # 3. ⚡ THE FIX: Run Heavy Tasks in Background Threads ⚡
+            # This frees up the server to handle website traffic immediately
             import gcal 
-            event_id = gcal.create_google_event(booking)
+            
+            # Run Google Sync in background
+            event_id = await asyncio.to_thread(gcal.create_google_event, booking)
+            
             if event_id:
                 database.update_google_event_id(self.booking_id, event_id)
             
-            # 3. Send Emails
-            notifications.send_acceptance_email(booking)
+            # Run Email Sending in background (The slowest part!)
+            await asyncio.to_thread(notifications.send_acceptance_email, booking)
 
-            # 4. SAFE LINK LOGIC (Fixes the crash)
+            # 4. Construct the Link (Safe Logic)
             link = notifications.MEETING_LINK
             if booking.get('location_type') == 'ONLINE':
-                # Only make it a clickable link if it starts with http
                 if link and link.startswith("http"):
                     join_info = f"[**Click to Join Zoom**]({link})"
                 else:
@@ -46,12 +56,13 @@ class BookingView(View):
             else:
                 join_info = f"📍 {booking.get('location_details')}"
 
-            # 5. Edit Discord Message
+            # 5. Update Discord Message
             await interaction.message.edit(
                 content=f"✅ **ACCEPTED** by {interaction.user.name}\n{join_info}", 
                 view=None
             )
-            
+            print("✅ Process Complete.")
+
         except Exception as e:
             print(f"CRITICAL ERROR: {e}")
             await interaction.followup.send(f"⚠️ Error: {e}", ephemeral=True)

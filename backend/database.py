@@ -11,6 +11,7 @@ DB_NAME = os.path.join(DATA_DIR, "carbon.db")
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
+    conn.execute("PRAGMA journal_mode=WAL;")
     cursor = conn.cursor()
     
     # 1. Bookings Table
