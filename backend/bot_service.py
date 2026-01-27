@@ -19,54 +19,42 @@ class BookingView(View):
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green, custom_id="accept_btn")
     async def accept_button(self, interaction: discord.Interaction, button: Button):
-        # 1. Acknowledge immediately so Discord doesn't say "Interaction Failed"
         await interaction.response.defer()
         
         try:
-            print(f"🔄 Attempting to ACCEPT booking {self.booking_id}...")
-            
-            # 2. Update Local DB
+            # 1. Update DB
             database.update_booking_status(self.booking_id, "ACCEPTED")
             booking = database.get_booking(self.booking_id)
             
-            if not booking:
-                await interaction.followup.send("❌ Error: Booking not found in Database.", ephemeral=True)
-                return
-
-            # 3. Sync to Google Calendar
-            import gcal
-            print("📅 Creating Google Calendar Event...")
+            # 2. Sync Google Calendar
+            import gcal 
             event_id = gcal.create_google_event(booking)
-            
             if event_id:
                 database.update_google_event_id(self.booking_id, event_id)
-                print(f"✅ Google Event Created: {event_id}")
-            else:
-                print("⚠️ Google Event Creation Failed (Check gcal logs)")
-
-            # 4. Send Emails
-            print("📧 Sending Emails...")
+            
+            # 3. Send Emails
             notifications.send_acceptance_email(booking)
 
-            # 5. Determine Link
-            join_info = "Link sent via Email"
+            # 4. SAFE LINK LOGIC (Fixes the crash)
+            link = notifications.MEETING_LINK
             if booking.get('location_type') == 'ONLINE':
-                join_info = f"[**Click to Join Zoom**]({notifications.MEETING_LINK})"
+                # Only make it a clickable link if it starts with http
+                if link and link.startswith("http"):
+                    join_info = f"[**Click to Join Zoom**]({link})"
+                else:
+                    join_info = f"**Link:** {link}"
             else:
                 join_info = f"📍 {booking.get('location_details')}"
 
-            # 6. Success Message
+            # 5. Edit Discord Message
             await interaction.message.edit(
                 content=f"✅ **ACCEPTED** by {interaction.user.name}\n{join_info}", 
                 view=None
             )
-            print("✅ Booking fully processed.")
-
+            
         except Exception as e:
-            # 🚨 CATCH THE ERROR AND PRINT IT
-            error_msg = f"CRITICAL ERROR: {str(e)}"
-            print(error_msg)
-            await interaction.followup.send(f"⚠️ **System Crash:** {e}\n*Check Railway Logs for details.*", ephemeral=True)
+            print(f"CRITICAL ERROR: {e}")
+            await interaction.followup.send(f"⚠️ Error: {e}", ephemeral=True)
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red, custom_id="reject_btn")
     async def reject_button(self, interaction: discord.Interaction, button: Button):
