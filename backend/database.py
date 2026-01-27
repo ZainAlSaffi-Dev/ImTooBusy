@@ -2,15 +2,11 @@ import sqlite3
 import os
 from datetime import datetime, timedelta
 
-# --- UPDATE START ---
-# 1. Define a persistent directory
+# --- PERSISTENCE SETUP ---
+# This ensures the DB lives in the persistent volume
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
-
-# 2. Ensure the folder exists
 os.makedirs(DATA_DIR, exist_ok=True)
-
-# 3. Point the DB to 'data/carbon.db'
 DB_NAME = os.path.join(DATA_DIR, "carbon.db")
 
 def init_db():
@@ -30,7 +26,8 @@ def init_db():
             status TEXT DEFAULT 'PENDING',
             created_at TEXT,
             location_type TEXT DEFAULT 'ONLINE',
-            location_details TEXT DEFAULT ''
+            location_details TEXT DEFAULT '',
+            google_event_id TEXT 
         )
     ''')
     
@@ -45,7 +42,7 @@ def init_db():
         )
     ''')
 
-    # 3. NEW: Banned IPs Table
+    # 3. Banned IPs Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS banned_ips (
             ip TEXT PRIMARY KEY,
@@ -53,6 +50,17 @@ def init_db():
             expires_at TEXT
         )
     ''')
+
+    # --- AUTO-MIGRATION (THE FIX) ---
+    # This block runs every time. It tries to add the column. 
+    # If the column exists, it ignores the error.
+    try:
+        cursor.execute("ALTER TABLE bookings ADD COLUMN google_event_id TEXT")
+        print("✅ MIGRATION SUCCESS: Added 'google_event_id' column")
+    except sqlite3.OperationalError:
+        # This error means the column likely already exists, which is fine.
+        pass
+    # --------------------------------
 
     conn.commit()
     conn.close()
@@ -142,7 +150,7 @@ def get_blocks_for_range(start_date, end_date):
         normalized_blocks.append({"date": r[0], "time": r[1], "duration": duration_mins})
     return normalized_blocks
 
-# --- SECURITY FUNCTIONS (NEW) ---
+# --- SECURITY FUNCTIONS ---
 
 def check_spam_stats(email):
     conn = sqlite3.connect(DB_NAME)
@@ -156,34 +164,27 @@ def check_spam_stats(email):
     return {"pending": pending_count, "rejected": rejected_count}
 
 def ban_ip(ip, reason, duration_minutes):
-    """Bans an IP for a specific duration (or 10 years if roughly permanent)."""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     expires_at = (datetime.now() + timedelta(minutes=duration_minutes)).isoformat()
-    
-    # UPSERT: If IP exists, update the expiration
     cursor.execute('''
         INSERT INTO banned_ips (ip, reason, expires_at) VALUES (?, ?, ?)
         ON CONFLICT(ip) DO UPDATE SET expires_at=excluded.expires_at, reason=excluded.reason
     ''', (ip, reason, expires_at))
-    
     conn.commit()
     conn.close()
 
 def is_ip_banned(ip):
-    """Returns True if IP is in the ban list and time hasn't expired."""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("SELECT expires_at FROM banned_ips WHERE ip = ?", (ip,))
     row = cursor.fetchone()
     conn.close()
-    
     if row:
         expires_at = datetime.fromisoformat(row[0])
         if datetime.now() < expires_at:
-            return True # Still banned
+            return True 
         else:
-            # Clean up expired ban (Optional, but keeps DB clean)
             unban_ip(ip)
     return False
 
@@ -195,7 +196,6 @@ def unban_ip(ip):
     conn.close()
 
 def wipe_troll_requests(email):
-    """Deletes ALL pending/accepted requests from a specific email."""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM bookings WHERE email = ?", (email,))
@@ -204,11 +204,11 @@ def wipe_troll_requests(email):
     conn.close()
     return deleted_count
 
-
-## New gcal helper to add google ID for meetings
+# --- GOOGLE EVENT ID HELPER ---
 def update_google_event_id(booking_id, event_id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
+    # If this still fails, the migration above didn't run, but it should!
     cursor.execute('UPDATE bookings SET google_event_id = ? WHERE id = ?', (event_id, booking_id))
     conn.commit()
     conn.close()
