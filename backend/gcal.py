@@ -25,15 +25,13 @@ BUFFER_KEYWORDS = os.getenv("BUFFER_KEYWORDS", "work,shift,ambassador,class").lo
 BUFFER_COLOR_IDS = os.getenv("BUFFER_COLOR_IDS", "").split(",")
 
 # ⚡ THE CACHE STORAGE ⚡
-# Format: { "start_end_key": (expiry_time, data_list) }
 _CALENDAR_CACHE = {}
-CACHE_DURATION = 300  # 5 Minutes (in seconds)
+CACHE_DURATION = 300  # 5 Minutes
 
 def clear_cache():
-    """Wipes the memory so we fetch fresh data immediately."""
     global _CALENDAR_CACHE
     _CALENDAR_CACHE = {}
-    print("🧹 Cache cleared! Next fetch will be fresh.")
+    print("🧹 Cache cleared!")
 
 def get_service():
     creds = None
@@ -71,19 +69,18 @@ def fetch_events_from_calendar(service, calendar_id, t_min, t_max):
         return []
 
 def get_google_busy_times(start_iso, end_iso):
-    # 1. CHECK CACHE FIRST
+    # 1. CHECK CACHE
     cache_key = f"{start_iso}_{end_iso}"
     if cache_key in _CALENDAR_CACHE:
         expiry, data = _CALENDAR_CACHE[cache_key]
         if time.time() < expiry:
-            print("⚡ USING CACHED DATA (Fast Load)")
+            print("⚡ USING CACHED DATA")
             return data
 
-    # 2. IF NOT IN CACHE, FETCH FROM GOOGLE
     service = get_service()
     if not service: return []
 
-    # Timezone Fix
+    # Timezone Helper
     def to_utc_iso(iso_str):
         if "T" in iso_str and "Z" not in iso_str:
             dt_naive = datetime.fromisoformat(iso_str)
@@ -97,30 +94,38 @@ def get_google_busy_times(start_iso, end_iso):
 
     calendars = ['primary'] + EXTRA_CALENDAR_IDS
     all_events = []
-    print(f"🔎 Scanning {len(calendars)} calendars from {t_min}...")
     
     for cal_id in calendars:
-        events = fetch_events_from_calendar(service, cal_id, t_min, t_max)
-        all_events.extend(events)
+        all_events.extend(fetch_events_from_calendar(service, cal_id, t_min, t_max))
 
     normalized = []
     for event in all_events:
+        # 🟢 FIX 1: Respect "Show as Free" (Transparency)
+        if event.get('transparency') == 'transparent':
+            continue # Skip this event, it is marked as Free
+
         start_str = event['start'].get('dateTime') or event['start'].get('date')
         end_str = event['end'].get('dateTime') or event['end'].get('date')
         
         try:
-            if 'T' in start_str:
-                dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
-            else:
-                dt_naive = datetime.strptime(start_str, "%Y-%m-%d")
-                dt = BRISBANE_TZ.localize(dt_naive)
+            is_all_day = 'T' not in start_str
             
-            start_dt = dt
-            end_dt = datetime.fromisoformat(end_str.replace('Z', '+00:00')) if 'T' in end_str else BRISBANE_TZ.localize(datetime.strptime(end_str, "%Y-%m-%d"))
+            if not is_all_day:
+                dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+                start_dt = dt
+                end_dt = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+            else:
+                # Handle All Day Events (Midnight to Midnight)
+                dt_naive = datetime.strptime(start_str, "%Y-%m-%d")
+                start_dt = BRISBANE_TZ.localize(dt_naive)
+                # Google All-Day ends on the NEXT day 00:00, which is correct
+                end_dt_naive = datetime.strptime(end_str, "%Y-%m-%d")
+                end_dt = BRISBANE_TZ.localize(end_dt_naive)
 
         except:
             continue
 
+        # Check Logic
         title = event.get('summary', '').lower()
         color = event.get('colorId', '') 
 
@@ -128,7 +133,9 @@ def get_google_busy_times(start_iso, end_iso):
         if any(w in title for w in BUFFER_KEYWORDS): is_buffered = True
         if color in BUFFER_COLOR_IDS: is_buffered = True
 
-        if is_buffered:
+        # 🟢 FIX 2: Only Buffer NON-All-Day events
+        # Buffering an all-day event makes it overlap into yesterday/tomorrow
+        if is_buffered and not is_all_day:
             start_dt -= timedelta(hours=1)
             end_dt += timedelta(hours=1)
 
@@ -142,12 +149,11 @@ def get_google_busy_times(start_iso, end_iso):
             "source": "GOOGLE_CAL"
         })
     
-    # 3. SAVE TO CACHE
     _CALENDAR_CACHE[cache_key] = (time.time() + CACHE_DURATION, normalized)
-    
     return normalized
 
 def create_google_event(booking_data):
+    # (Keep this function exactly as it was in your previous version)
     service = get_service()
     if not service: return None
     
@@ -170,10 +176,7 @@ def create_google_event(booking_data):
     }
 
     created = service.events().insert(calendarId='primary', body=event, sendUpdates='all').execute()
-    
-    # 💥 CLEAR CACHE ON BOOKING 💥
     clear_cache()
-    
     return created.get('id')
 
 def delete_google_event(event_id):
@@ -182,9 +185,6 @@ def delete_google_event(event_id):
     if not service: return
     try:
         service.events().delete(calendarId='primary', eventId=event_id).execute()
-        
-        # 💥 CLEAR CACHE ON CANCEL 💥
         clear_cache()
-        
     except Exception as e:
         print(f"⚠️ Failed to delete: {e}")
