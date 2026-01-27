@@ -7,20 +7,24 @@ def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
+    # 1. Bookings Table (Updated with location columns)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             email TEXT NOT NULL,
             topic TEXT NOT NULL,
-            date TEXT NOT NULL,
-            time TEXT NOT NULL,
+            date TEXT NOT NULL,    
+            time TEXT NOT NULL,    
             duration INTEGER NOT NULL,
             status TEXT DEFAULT 'PENDING',
-            created_at TEXT
+            created_at TEXT,
+            location_type TEXT DEFAULT 'ONLINE',
+            location_details TEXT DEFAULT ''
         )
     ''')
     
+    # 2. Blocked Time
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS blocks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,15 +38,21 @@ def init_db():
     conn.commit()
     conn.close()
 
-def add_booking(name, email, topic, date, time, duration):
+# UPDATE: Added location_type and location_details
+def add_booking(name, email, topic, date, time, duration, location_type, location_details):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     created_at = datetime.now().isoformat()
-    cursor.execute('INSERT INTO bookings (name, email, topic, date, time, duration, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)', (name, email, topic, date, time, duration, created_at))
+    
+    cursor.execute('''
+        INSERT INTO bookings 
+        (name, email, topic, date, time, duration, location_type, location_details, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (name, email, topic, date, time, duration, location_type, location_details, created_at))
+    
     conn.commit()
     conn.close()
 
-# UPDATED: Filters out CANCELLED/REJECTED so slots open up naturally
 def get_bookings_for_range(start_date, end_date):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -51,7 +61,6 @@ def get_bookings_for_range(start_date, end_date):
     conn.close()
     return [{"date": r[0], "time": r[1], "duration": r[2]} for r in rows]
 
-# NEW: Fetches blocks and normalizes them to look like bookings (start + duration)
 def get_blocks_for_range(start_date, end_date):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -69,13 +78,17 @@ def get_blocks_for_range(start_date, end_date):
         
     return normalized_blocks
 
+# UPDATE: Now fetches location info for the dashboard
 def get_all_bookings():
     conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row # This allows us to access columns by name (safer)
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM bookings ORDER BY date DESC, time ASC')
     rows = cursor.fetchall()
     conn.close()
-    return [{"id": r[0], "name": r[1], "email": r[2], "topic": r[3], "date": r[4], "time": r[5], "duration": r[6], "status": r[7], "created_at": r[8]} for r in rows]
+    
+    # Convert Row objects to dicts
+    return [dict(row) for row in rows]
 
 def update_booking_status(booking_id, new_status):
     conn = sqlite3.connect(DB_NAME)
@@ -84,18 +97,18 @@ def update_booking_status(booking_id, new_status):
     conn.commit()
     conn.close()
 
-# NEW: Helper to get single booking for cancellation logic
+# UPDATE: Now fetches location info for emails
 def get_booking(booking_id):
     conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row # Access by column name
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM bookings WHERE id = ?', (booking_id,))
     r = cursor.fetchone()
     conn.close()
     if r:
-        return {"id": r[0], "name": r[1], "email": r[2], "topic": r[3], "date": r[4], "time": r[5], "duration": r[6], "status": r[7]}
+        return dict(r)
     return None
 
-# NEW: Adds a block to the schedule
 def add_block(date, start_time, end_time, reason):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -106,7 +119,6 @@ def add_block(date, start_time, end_time, reason):
 def get_all_blocks():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    # Order by date descending (newest blocks first)
     cursor.execute('SELECT * FROM blocks ORDER BY date DESC, start_time ASC')
     rows = cursor.fetchall()
     conn.close()

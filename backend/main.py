@@ -5,7 +5,11 @@ from datetime import datetime, timedelta
 import database
 import pytz
 import auth
-import gcal # NEW IMPORT
+import gcal
+import notifications
+from typing import Optional
+import asyncio
+import bot_service
 
 app = FastAPI()
 AEST = pytz.timezone('Australia/Brisbane')
@@ -14,8 +18,16 @@ AEST = pytz.timezone('Australia/Brisbane')
 STANDARD_HOURS = {"start": 9, "end": 17}    # Public
 FRIEND_HOURS = {"start": 8, "end": 22}      # VIP Link Only
 
+# --- THE FIX IS HERE ---
+# We change this to 'async' and create a background task for the bot
 @app.on_event("startup")
-def startup(): database.init_db()
+async def startup():
+    # 1. Initialize Database
+    database.init_db()
+    
+    # 2. Wake up the Discord Bot in the background
+    print("🚀 Launching Discord Bot...")
+    asyncio.create_task(bot_service.start_bot())
 
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
@@ -29,7 +41,9 @@ class MeetingRequest(BaseModel):
     topic: str
     slot_iso: str
     duration: int
-    token: str = None  # NEW: Optional token field
+    token: Optional[str] = None  
+    location_type: str = "ONLINE"     
+    location_details: str = ""        
 
 class StatusUpdate(BaseModel): status: str
 
@@ -63,30 +77,57 @@ def is_overlapping(slot_iso, duration, occupied_slots):
 
 # --- API ENDPOINTS ---
 
-# UPDATE 2: Update the Endpoint logic
+# 2. UPDATE CREATE_MEETING ENDPOINT
 @app.post("/api/request-meeting")
-def create_meeting(request: MeetingRequest):
+async def create_meeting(request: MeetingRequest):
+    # ... (Date checks remain the same) ...
     dt = datetime.fromisoformat(request.slot_iso)
     dt_aest = dt.astimezone(AEST)
     
-    # 1. Check for Past Dates (Time Travel Prevention)
     if dt_aest < datetime.now(AEST):
         raise HTTPException(status_code=400, detail="Cannot book in the past")
 
-    # 2. Handle Friend Logic
     final_topic = request.topic
     if request.token and auth.verify_friend_token(request.token):
-        final_topic = f"⚡ [FRIEND] {request.topic}"  # Add the tag!
-    
-    # 3. Save to DB
+        final_topic = f"⚡ [FRIEND] {request.topic}"
+
+    # 1. Save to DB
     database.add_booking(
         request.name, 
         request.email, 
         final_topic, 
         dt_aest.strftime("%Y-%m-%d"), 
         dt_aest.strftime("%H:%M"), 
-        request.duration
+        request.duration,
+        request.location_type,
+        request.location_details
     )
+    
+    # 2. Get ID
+    conn = database.sqlite3.connect(database.DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT seq FROM sqlite_sequence WHERE name='bookings'")
+    new_id = cursor.fetchone()[0]
+    conn.close()
+
+    # 3. Send Interactive Alert via Discord Bot (SAFE MODE)
+    booking_data = {
+        "name": request.name,
+        "email": request.email,
+        "topic": final_topic,
+        "date": dt_aest.strftime("%Y-%m-%d"),
+        "time": dt_aest.strftime("%H:%M"),
+        "location_type": request.location_type,
+        "location_details": request.location_details
+    }
+    
+    # We wrap this in Try/Except so a Discord failure DOES NOT crash the booking
+    try:
+        await bot_service.bot_instance.send_booking_request(booking_data, new_id)
+    except Exception as e:
+        print(f"⚠️ Notification System Error: {e}")
+        # We continue anyway because the booking IS saved in the database
+
     return {"success": True}
 
 @app.get("/api/availability")
@@ -116,8 +157,6 @@ def get_availability(start_date: str, end_date: str, duration: int, token: str =
         
         # Public Users: 7 Day Notice Rule. Friends: No notice rule.
         if not is_friend and (date_aest - now_aest).days < 7:
-            # If public, skip days too soon
-            # results[date_str] = [] -- Optional: Don't even return them
             pass 
         
         candidates = get_slots_for_day(date_aest, hours['start'], hours['end'], 15)
@@ -134,14 +173,23 @@ def get_availability(start_date: str, end_date: str, duration: int, token: str =
         current += timedelta(days=1)
     return results
 
+
 @app.patch("/api/admin/bookings/{booking_id}")
 def update_status(booking_id: int, update: StatusUpdate):
     database.update_booking_status(booking_id, update.status)
     
-    # SYNC: If Approved, push to Google Calendar
+    # Fetch details so we know who to email
+    booking = database.get_booking(booking_id)
+
     if update.status == "ACCEPTED":
-        booking = database.get_booking(booking_id)
+        # 1. Sync to Google Calendar (if set up)
         gcal.create_google_event(booking)
+        # 2. Email the Client
+        notifications.send_acceptance_email(booking)
+        
+    elif update.status == "REJECTED":
+        # Email the Client
+        notifications.send_rejection_email(booking)
         
     return {"success": True}
 
