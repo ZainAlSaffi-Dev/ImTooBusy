@@ -1,6 +1,7 @@
 import { X, Calendar, Clock, ArrowRight, ArrowLeft, CheckCircle, Globe, AlertTriangle, RefreshCcw, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+
 const BookingModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
   
@@ -10,6 +11,7 @@ const BookingModal = ({ isOpen, onClose }) => {
     const [weekOffset, setWeekOffset] = useState(0); 
     const [availability, setAvailability] = useState({});
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     
     // NEW: FRIEND TOKEN STATE
     const [friendToken, setFriendToken] = useState(null);
@@ -125,6 +127,7 @@ const BookingModal = ({ isOpen, onClose }) => {
   };
 
   const handleSubmit = async () => {
+    setSubmitting(true);
     try {
         const payload = {
             name: formData.name,
@@ -132,7 +135,10 @@ const BookingModal = ({ isOpen, onClose }) => {
             topic: formData.topic,
             slot_iso: selectedSlotISO, 
             duration: duration,
-            token: friendToken
+            token: friendToken || null,
+            location_type: formData.locationType || 'ONLINE',
+            location_details: formData.locationDetails || '' ,
+            fax_number: formData.fax_number || ""
         };
 
         const response = await fetch('http://127.0.0.1:8000/api/request-meeting', {
@@ -150,6 +156,8 @@ const BookingModal = ({ isOpen, onClose }) => {
         }
     } catch (error) {
         alert("Server error.");
+    } finally {
+        setSubmitting(false);
     }
   };
 
@@ -344,6 +352,37 @@ const BookingModal = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="space-y-4">
+                    {/* LOCATION TOGGLE */}
+                    <div className="bg-black/30 p-1 rounded-lg flex mb-6 border border-white/10">
+                        <button 
+                            onClick={() => setFormData({...formData, locationType: 'ONLINE'})}
+                            className={`flex-1 py-3 text-sm font-bold rounded transition-all ${!formData.locationType || formData.locationType === 'ONLINE' ? 'bg-carbon-primary text-black' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            💻 Online
+                        </button>
+                        <button 
+                            onClick={() => setFormData({...formData, locationType: 'IN_PERSON'})}
+                            className={`flex-1 py-3 text-sm font-bold rounded transition-all ${formData.locationType === 'IN_PERSON' ? 'bg-carbon-primary text-black' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            📍 In Person
+                        </button>
+                    </div>
+
+                    {/* CONDITIONAL LOCATION INPUT */}
+                    {formData.locationType === 'IN_PERSON' && (
+                        <div className="mb-6 animate-in fade-in slide-in-from-top-2">
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-400">Where are we meeting?</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="e.g., Coffee Shop, My Office, UQ Campus"
+                                    value={formData.locationDetails || ''} 
+                                    onChange={e => setFormData({...formData, locationDetails: e.target.value})}
+                                    className="w-full bg-black/30 border border-white/10 rounded p-3 text-white focus:border-carbon-primary outline-none" 
+                                />
+                            </div>
+                        </div>
+                    )}
                     <InputField label="Full Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="John Doe" />
                     <InputField label="Email Address" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="john@example.com" />
                     
@@ -357,12 +396,38 @@ const BookingModal = ({ isOpen, onClose }) => {
                         />
                     </div>
                 </div>
+                
+                {/* HoneyPot*/}
+                <div className="opacity-0 absolute top-0 left-0 h-0 w-0 overflow-hidden">
+                    <label>Fax Number</label>
+                    <input 
+                        type="text" 
+                        name="fax_number" 
+                        tabIndex="-1" 
+                        autoComplete="off"
+                        value={formData.fax_number || ''}
+                        onChange={e => setFormData({...formData, fax_number: e.target.value})}
+                    />
+                </div>
+
 
                 <button 
                     onClick={handleSubmit}
-                    className={`w-full py-4 text-black font-bold rounded-lg transition-all text-lg ${customMode ? 'bg-yellow-500 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'bg-carbon-primary hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]'}`}
+                    disabled={submitting} // <--- Disable if submitting
+                    className={`w-full py-4 text-black font-bold rounded-lg transition-all text-lg flex items-center justify-center gap-2 ${
+                        customMode 
+                        ? 'bg-yellow-500 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]' 
+                        : 'bg-carbon-primary hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]'
+                    } ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                    Confirm Request
+                    {submitting ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"/>
+                            Processing...
+                        </>
+                    ) : (
+                        "Confirm Request"
+                    )}
                 </button>
             </div>
           )}

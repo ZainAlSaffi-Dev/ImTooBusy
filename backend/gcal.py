@@ -1,124 +1,190 @@
+import os
 import os.path
+import time
+import pytz
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# --- CONFIG & CACHE SETUP ---
+if os.path.exists('.env'):
+    load_dotenv('.env')
+elif os.path.exists('backend/.env'):
+    load_dotenv('backend/.env')
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
-CALENDAR_ID = 'primary' 
+BRISBANE_TZ = pytz.timezone('Australia/Brisbane')
+
+# LOAD CALENDARS
+extra_cals_str = os.getenv("EXTRA_CALENDAR_IDS", "")
+EXTRA_CALENDAR_IDS = [c.strip() for c in extra_cals_str.split(",") if c.strip()]
+BUFFER_KEYWORDS = os.getenv("BUFFER_KEYWORDS", "work,shift,ambassador,class").lower().split(",")
+BUFFER_COLOR_IDS = os.getenv("BUFFER_COLOR_IDS", "").split(",")
+
+# ⚡ THE CACHE STORAGE ⚡
+# Format: { "start_end_key": (expiry_time, data_list) }
+_CALENDAR_CACHE = {}
+CACHE_DURATION = 300  # 5 Minutes (in seconds)
+
+def clear_cache():
+    """Wipes the memory so we fetch fresh data immediately."""
+    global _CALENDAR_CACHE
+    _CALENDAR_CACHE = {}
+    print("🧹 Cache cleared! Next fetch will be fresh.")
 
 def get_service():
-    """Authenticates with Google and returns the API Service."""
     creds = None
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    token_path = 'backend/token.json' if os.path.exists('backend/token.json') else 'token.json'
+    cred_path = 'backend/credentials.json' if os.path.exists('backend/credentials.json') else 'credentials.json'
+
+    if os.path.exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            if os.path.exists('credentials.json'):
-                flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+            if os.path.exists(cred_path):
+                flow = InstalledAppFlow.from_client_secrets_file(cred_path, SCOPES)
                 creds = flow.run_local_server(port=0)
             else:
                 return None
-        with open('token.json', 'w') as token:
+        with open(token_path, 'w') as token:
             token.write(creds.to_json())
     return build('calendar', 'v3', credentials=creds)
 
+def fetch_events_from_calendar(service, calendar_id, t_min, t_max):
+    try:
+        events_result = service.events().list(
+            calendarId=calendar_id, 
+            timeMin=t_min, 
+            timeMax=t_max, 
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+        return events_result.get('items', [])
+    except Exception as e:
+        print(f"⚠️ Failed to fetch from {calendar_id[:15]}...: {e}")
+        return []
+
 def get_google_busy_times(start_iso, end_iso):
-    """
-    Fetches events to determine busy slots.
-    SMART FEATURE: If event title contains "Work", adds 1hr buffer before/after.
-    """
+    # 1. CHECK CACHE FIRST
+    cache_key = f"{start_iso}_{end_iso}"
+    if cache_key in _CALENDAR_CACHE:
+        expiry, data = _CALENDAR_CACHE[cache_key]
+        if time.time() < expiry:
+            print("⚡ USING CACHED DATA (Fast Load)")
+            return data
+
+    # 2. IF NOT IN CACHE, FETCH FROM GOOGLE
     service = get_service()
     if not service: return []
 
-    # Convert to RFC3339 format for Google
-    t_min = start_iso + "Z"
-    t_max = end_iso + "Z"
+    # Timezone Fix
+    def to_utc_iso(iso_str):
+        if "T" in iso_str and "Z" not in iso_str:
+            dt_naive = datetime.fromisoformat(iso_str)
+            dt_brisbane = BRISBANE_TZ.localize(dt_naive)
+            dt_utc = dt_brisbane.astimezone(pytz.utc)
+            return dt_utc.isoformat().replace("+00:00", "Z")
+        return iso_str + "Z"
 
-    # We use events().list instead of freebusy to read the titles ("Work")
-    events_result = service.events().list(
-        calendarId=CALENDAR_ID, 
-        timeMin=t_min, 
-        timeMax=t_max, 
-        singleEvents=True,
-        orderBy='startTime'
-    ).execute()
+    t_min = to_utc_iso(start_iso)
+    t_max = to_utc_iso(end_iso)
+
+    calendars = ['primary'] + EXTRA_CALENDAR_IDS
+    all_events = []
+    print(f"🔎 Scanning {len(calendars)} calendars from {t_min}...")
     
-    events = events_result.get('items', [])
-    normalized = []
+    for cal_id in calendars:
+        events = fetch_events_from_calendar(service, cal_id, t_min, t_max)
+        all_events.extend(events)
 
-    for event in events:
+    normalized = []
+    for event in all_events:
         start_str = event['start'].get('dateTime') or event['start'].get('date')
         end_str = event['end'].get('dateTime') or event['end'].get('date')
         
-        # Handle Full Day events (YYYY-MM-DD) vs Time events (ISO)
         try:
             if 'T' in start_str:
-                start_dt = datetime.fromisoformat(start_str.replace('Z', ''))
-                end_dt = datetime.fromisoformat(end_str.replace('Z', ''))
+                dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
             else:
-                start_dt = datetime.strptime(start_str, "%Y-%m-%d")
-                end_dt = datetime.strptime(end_str, "%Y-%m-%d")
+                dt_naive = datetime.strptime(start_str, "%Y-%m-%d")
+                dt = BRISBANE_TZ.localize(dt_naive)
+            
+            start_dt = dt
+            end_dt = datetime.fromisoformat(end_str.replace('Z', '+00:00')) if 'T' in end_str else BRISBANE_TZ.localize(datetime.strptime(end_str, "%Y-%m-%d"))
+
         except:
             continue
 
-        # SMART BUFFER LOGIC
-        summary = event.get('summary', '').lower()
-        if "work" in summary:
-            # Add 1 hour buffer before and after
+        title = event.get('summary', '').lower()
+        color = event.get('colorId', '') 
+
+        is_buffered = False
+        if any(w in title for w in BUFFER_KEYWORDS): is_buffered = True
+        if color in BUFFER_COLOR_IDS: is_buffered = True
+
+        if is_buffered:
             start_dt -= timedelta(hours=1)
             end_dt += timedelta(hours=1)
-            print(f"🛡️ WORK DETECTED: Added 1hr buffer around '{event.get('summary')}'")
 
         duration = int((end_dt - start_dt).total_seconds() / 60)
-        
+        local_start = start_dt.astimezone(BRISBANE_TZ)
+
         normalized.append({
-            "date": start_dt.strftime("%Y-%m-%d"),
-            "time": start_dt.strftime("%H:%M"),
+            "date": local_start.strftime("%Y-%m-%d"),
+            "time": local_start.strftime("%H:%M"),
             "duration": duration,
             "source": "GOOGLE_CAL"
         })
-        
+    
+    # 3. SAVE TO CACHE
+    _CALENDAR_CACHE[cache_key] = (time.time() + CACHE_DURATION, normalized)
+    
     return normalized
 
 def create_google_event(booking_data):
-    """Pushes booking to GCal and returns the Event ID."""
     service = get_service()
     if not service: return None
-
-    start_dt = datetime.strptime(f"{booking_data['date']} {booking_data['time']}", "%Y-%m-%d %H:%M")
+    
+    start_dt = BRISBANE_TZ.localize(datetime.strptime(f"{booking_data['date']} {booking_data['time']}", "%Y-%m-%d %H:%M"))
     end_dt = start_dt + timedelta(minutes=booking_data['duration'])
+    
+    loc = 'Online'
+    if booking_data.get('location_type') == 'IN_PERSON':
+        loc = booking_data.get('location_details', 'In Person')
+    
+    link = os.getenv('DEFAULT_MEETING_LINK', 'No Link')
 
     event = {
         'summary': f"Meeting: {booking_data['name']}",
-        'location': booking_data.get('location_details', 'Online') if booking_data.get('location_type') == 'IN_PERSON' else 'Online',
-        'description': f"Topic: {booking_data['topic']}\nEmail: {booking_data['email']}\nJoin Link: {os.getenv('DEFAULT_MEETING_LINK')}",
+        'location': loc,
+        'description': f"Topic: {booking_data['topic']}\nEmail: {booking_data['email']}\nJoin Link: {link}",
         'start': { 'dateTime': start_dt.isoformat(), 'timeZone': 'Australia/Brisbane' },
         'end': { 'dateTime': end_dt.isoformat(), 'timeZone': 'Australia/Brisbane' },
         'attendees': [ {'email': booking_data['email']} ],
     }
 
+    created = service.events().insert(calendarId='primary', body=event, sendUpdates='all').execute()
     
-    # We added sendUpdates='all' to force Google to send the email invite
-    created_event = service.events().insert(
-        calendarId=CALENDAR_ID, 
-        body=event, 
-        sendUpdates='all' 
-    ).execute()
+    # 💥 CLEAR CACHE ON BOOKING 💥
+    clear_cache()
     
-    return created_event.get('id')
+    return created.get('id')
 
 def delete_google_event(event_id):
-    """Removes the event from Google Calendar if we cancel/ban."""
     if not event_id: return
     service = get_service()
     if not service: return
-
     try:
-        service.events().delete(calendarId=CALENDAR_ID, eventId=event_id).execute()
-        print(f"🗑️ Deleted Google Event: {event_id}")
+        service.events().delete(calendarId='primary', eventId=event_id).execute()
+        
+        # 💥 CLEAR CACHE ON CANCEL 💥
+        clear_cache()
+        
     except Exception as e:
-        print(f"⚠️ Failed to delete Google Event: {e}")
+        print(f"⚠️ Failed to delete: {e}")

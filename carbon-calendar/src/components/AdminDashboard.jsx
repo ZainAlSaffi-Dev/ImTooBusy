@@ -16,7 +16,16 @@ const AdminDashboard = () => {
   const [generatedLink, setGeneratedLink] = useState(null);
 
   useEffect(() => {
+    // 1. Fetch immediately when the page loads
     fetchData();
+
+    // 2. Set up a "Heartbeat" to fetch data every 5 seconds
+    const interval = setInterval(() => {
+        fetchData();
+    }, 5000); // 5000ms = 5 seconds
+
+    // 3. Cleanup: Stop the heartbeat if you leave the page (prevents memory leaks)
+    return () => clearInterval(interval);
   }, []);
 
   const fetchData = async () => {
@@ -78,7 +87,13 @@ const AdminDashboard = () => {
       
       {/* HEADER WITH ACTIONS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <h1 className="text-3xl font-bold text-white">ADMIN CONSOLE</h1>
+            <div className="flex items-center gap-4">
+                <h1 className="text-3xl font-bold text-white">ADMIN CONSOLE</h1>
+                <div className="flex items-center gap-2 px-2 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                    <span className="text-[10px] font-mono text-green-500 font-bold tracking-wider">LIVE</span>
+                </div>
+            </div>
           
           <button 
             onClick={generateFriendLink}
@@ -116,39 +131,40 @@ const AdminDashboard = () => {
             {/* TAB CONTENT: REQUESTS */}
             {activeTab === 'requests' && (
                 <div className="space-y-3 animate-in fade-in slide-in-from-left-4">
-                    {bookings.map((b) => (
-                        <div key={b.id} className="bg-white/5 border border-white/10 p-5 rounded-lg flex flex-col gap-3">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        {b.name} 
-                                        {/* SHOW FRIEND BADGE IF TOPIC HAS TAG */}
-                                        {b.topic.includes('⚡') && (
-                                            <span className="text-[10px] bg-yellow-500 text-black px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
-                                                FRIEND
-                                            </span>
-                                        )}
-                                    </h3>
-                                    <p className="text-sm text-carbon-primary font-mono">{b.date} @ {b.time} ({b.duration}m)</p>
+                    {/* NEW: Filter for PENDING only */}
+                    {bookings.filter(b => b.status === 'PENDING').length === 0 ? (
+                        <div className="text-gray-500 text-center py-10 border border-white/5 rounded-lg bg-white/5">
+                            All caught up! No pending requests.
+                        </div>
+                    ) : (
+                        bookings.filter(b => b.status === 'PENDING').map((b) => (
+                            <div key={b.id} className="bg-white/5 border border-white/10 p-5 rounded-lg flex flex-col gap-3">
+                                {/* ... (The rest of your existing card code remains the same) ... */}
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                            {b.name} 
+                                            {b.topic.includes('⚡') && (
+                                                <span className="text-[10px] bg-yellow-500 text-black px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                                                    FRIEND
+                                                </span>
+                                            )}
+                                        </h3>
+                                        <p className="text-sm text-carbon-primary font-mono">{b.date} @ {b.time} ({b.duration}m)</p>
+                                    </div>
+                                    <span className="px-2 py-1 text-xs font-bold rounded uppercase bg-yellow-500/20 text-yellow-400">
+                                        {b.status}
+                                    </span>
                                 </div>
-                                <span className={`px-2 py-1 text-xs font-bold rounded uppercase ${
-                                    b.status === 'ACCEPTED' ? 'bg-green-500/20 text-green-400' :
-                                    b.status === 'REJECTED' || b.status === 'CANCELLED' ? 'bg-red-500/20 text-red-400' :
-                                    'bg-yellow-500/20 text-yellow-400'
-                                }`}>
-                                    {b.status}
-                                </span>
-                            </div>
-                            <p className="text-sm text-gray-300 italic">"{b.topic.replace('⚡ [FRIEND] ', '')}"</p>
-                            
-                            {b.status === 'PENDING' && (
+                                <p className="text-sm text-gray-300 italic">"{b.topic.replace('⚡ [FRIEND] ', '')}"</p>
+                                
                                 <div className="flex gap-2 pt-2 border-t border-white/5">
                                     <button onClick={() => updateStatus(b.id, 'ACCEPTED')} className="flex-1 py-2 bg-green-500/10 text-green-400 text-xs font-bold rounded hover:bg-green-500/20">ACCEPT</button>
                                     <button onClick={() => updateStatus(b.id, 'REJECTED')} className="flex-1 py-2 bg-red-500/10 text-red-400 text-xs font-bold rounded hover:bg-red-500/20">REJECT</button>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                            </div>
+                        ))
+                    )}
                 </div>
             )}
 

@@ -15,7 +15,7 @@ import bot_service
 AEST = pytz.timezone('Australia/Brisbane')
 
 # CONFIG
-STANDARD_HOURS = {"start": 9, "end": 17}    # Public
+STANDARD_HOURS = {"start": 9, "end": 21}    # Public
 FRIEND_HOURS = {"start": 8, "end": 22}      # VIP Link Only
 
 # --- THE FIX IS HERE ---
@@ -195,21 +195,26 @@ def get_availability(start_date: str, end_date: str, duration: int, token: str =
     end = datetime.strptime(end_date, "%Y-%m-%d")
     now_aest = datetime.now(AEST)
 
+    
+    # Public = 24 Hours Notice. Friends = 30 Minutes Notice.
+    notice_buffer = timedelta(hours=24) if not is_friend else timedelta(minutes=30)
+    earliest_booking_time = now_aest + notice_buffer
+
     while current <= end:
         date_aest = AEST.localize(current)
         date_str = date_aest.strftime("%Y-%m-%d")
         
-        # Public Users: 7 Day Notice Rule. Friends: No notice rule.
-        if not is_friend and (date_aest - now_aest).days < 7:
-            pass 
+        # We removed the old "7 day" block. Now we filter specific slots instead.
         
         candidates = get_slots_for_day(date_aest, hours['start'], hours['end'], 15)
         
-        # Time Barrier
+        # Time Barrier & Notice Period Check
         future_candidates = []
         for s in candidates:
             slot_dt = datetime.fromisoformat(s)
-            if slot_dt > (now_aest + timedelta(minutes=30)):
+            
+            # Check: Is this slot strictly AFTER our notice period?
+            if slot_dt > earliest_booking_time:
                 future_candidates.append(s)
 
         valid = [s for s in future_candidates if not is_overlapping(s, duration, occupied)]
