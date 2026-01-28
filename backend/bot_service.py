@@ -17,6 +17,17 @@ class BookingView(View):
     def __init__(self, booking_id):
         super().__init__(timeout=None)
         self.booking_id = booking_id
+        # Disable cancel button until accepted
+        for child in self.children:
+            if getattr(child, "custom_id", "") == "cancel_btn":
+                child.disabled = True
+
+    def enable_cancel_only(self):
+        for child in self.children:
+            if getattr(child, "custom_id", "") == "cancel_btn":
+                child.disabled = False
+            else:
+                child.disabled = True
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green, custom_id="accept_btn")
     async def accept_button(self, interaction: discord.Interaction, button: Button):
@@ -46,9 +57,10 @@ class BookingView(View):
                 join_info = f"📍 {booking.get('location_details')}"
 
             # Update the message immediately to show "ACCEPTED"
+            self.enable_cancel_only()
             await interaction.message.edit(
                 content=f"✅ **ACCEPTED** by {interaction.user.name}\n{join_info}", 
-                view=None
+                view=self
             )
 
             # --- 3. HEAVY TASKS (Run in background AFTER UI update) ---
@@ -97,6 +109,38 @@ class BookingView(View):
         except Exception as e:
             print(f"❌ Rejection Error: {e}")
             await interaction.followup.send(f"⚠️ Error rejecting: {e}", ephemeral=True)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary, custom_id="cancel_btn")
+    async def cancel_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.defer()
+        try:
+            print(f"🧹 Cancelling booking {self.booking_id}...")
+            booking = database.get_booking(self.booking_id)
+            if not booking:
+                await interaction.followup.send("❌ Error: Booking lost.", ephemeral=True)
+                return
+            if booking.get("status") != "ACCEPTED":
+                await interaction.followup.send("⚠️ Only accepted bookings can be cancelled.", ephemeral=True)
+                return
+
+            database.update_booking_status(self.booking_id, "CANCELLED")
+
+            # Remove from Google Calendar if it exists
+            if booking.get('google_event_id'):
+                import gcal
+                gcal.delete_google_event(booking['google_event_id'])
+
+            # Notify user via email (background)
+            await asyncio.to_thread(
+                notifications.send_cancellation_email,
+                booking,
+                "Cancelled by host via Discord"
+            )
+
+            await interaction.message.edit(content=f"⚠️ **CANCELLED** by {interaction.user.name}", view=None)
+        except Exception as e:
+            print(f"❌ Cancellation Error: {e}")
+            await interaction.followup.send(f"⚠️ Error cancelling: {e}", ephemeral=True)
 
 class BanView(View):
     def __init__(self, ip_address):
