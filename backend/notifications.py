@@ -64,11 +64,26 @@ def send_email(to_email, subject, body):
     msg.attach(MIMEText(body, 'plain'))
 
     try:
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        # Primary: Gmail SSL (465)
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10)
         server.login(EMAIL_SENDER, EMAIL_PASSWORD)
         server.send_message(msg)
         server.quit()
-        print(f"✅ Email sent to {to_email}")
+        print(f"✅ Email sent to {to_email} via SSL")
+        return
+    except Exception as e:
+        print(f"⚠️ SSL email failed: {e}")
+
+    try:
+        # Fallback: Gmail STARTTLS (587)
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        print(f"✅ Email sent to {to_email} via STARTTLS")
     except Exception as e:
         print(f"❌ Failed to send email: {e}")
 

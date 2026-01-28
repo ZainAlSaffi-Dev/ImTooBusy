@@ -87,10 +87,12 @@ class BookingView(View):
             database.update_booking_status(self.booking_id, "REJECTED")
             booking = database.get_booking(self.booking_id)
             
-            if booking:
-                notifications.send_rejection_email(booking)
-
+            # Update the message immediately to show "REJECTED"
             await interaction.message.edit(content=f"❌ **REJECTED** by {interaction.user.name}", view=None)
+
+            # Send rejection email in background to avoid blocking the bot
+            if booking:
+                await asyncio.to_thread(notifications.send_rejection_email, booking)
             
         except Exception as e:
             print(f"❌ Rejection Error: {e}")
