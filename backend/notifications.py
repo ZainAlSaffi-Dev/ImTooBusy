@@ -103,3 +103,27 @@ Zain Al-Saffi
     # 2. Send Copy to Admin (YOU)
     admin_subject = f"✅ ACCEPTED: {booking['name']} ({booking['date']} @ {booking['time']})"
     send_email(EMAIL_SENDER, admin_subject, body) # Uses your own email logic
+
+def send_rejection_email(booking):
+    subject = f"Meeting Request Update: {booking['topic']}"
+    body = f"""
+Hi {booking['name']},
+
+Thanks for reaching out. Unfortunately I won’t be able to make the following time:
+
+Topic: {booking['topic']}
+Date: {booking['date']}
+Time: {booking['time']} (AEST)
+
+If you’d like, feel free to request a different time.
+
+Best,
+Zain Al-Saffi
+    """
+    
+    # 1. Send to Client
+    send_email(booking['email'], subject, body)
+    
+    # 2. Send Copy to Admin (YOU)
+    admin_subject = f"❌ REJECTED: {booking['name']} ({booking['date']} @ {booking['time']})"
+    send_email(EMAIL_SENDER, admin_subject, body)
