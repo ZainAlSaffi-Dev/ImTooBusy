@@ -112,6 +112,10 @@ class StatusUpdate(BaseModel): status: str
 class FriendLinkRequest(BaseModel):
     expires_in_minutes: Optional[int] = None
 
+class UnbanRequest(BaseModel):
+    password: str
+    ip: Optional[str] = None
+
 class CancelRequest(BaseModel):
     reason: str; block_slot: bool 
 
@@ -420,6 +424,14 @@ def generate_link(req: Optional[FriendLinkRequest] = None):
         "link": f"https://zainalsaffi.com/?token={token}", # UPDATED TO PRODUCTION DOMAIN
         "expires_at": expires_at.isoformat()
     }
+
+@app.post("/api/admin/unban-ip")
+def unban_ip(req: UnbanRequest, request: Request):
+    if not auth.verify_admin_password(req.password):
+        raise HTTPException(status_code=401, detail="Invalid Password")
+    ip = req.ip or request.client.host
+    database.unban_ip(ip)
+    return {"success": True, "ip": ip}
 
 # 2. Add the Login Endpoint
 @app.post("/api/admin/login")

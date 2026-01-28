@@ -95,6 +95,24 @@ const AdminDashboard = () => {
       }
   };
 
+  const unbanSelf = async () => {
+      const password = prompt("Enter admin password to unban this IP:");
+      if (!password) return;
+      const ip = prompt("Optional: enter IP to unban (leave blank for current IP):");
+      const payload = { password, ip: ip || null };
+      const res = await fetch(`${API_BASE_URL}/api/admin/unban-ip`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+          const data = await res.json();
+          alert(`Unbanned IP: ${data.ip}`);
+      } else {
+          alert("Failed to unban IP. Check password.");
+      }
+  };
+
   const formatTimeRemaining = (ms) => {
       if (ms <= 0) return "Expired";
       const totalSeconds = Math.floor(ms / 1000);
@@ -137,6 +155,12 @@ const AdminDashboard = () => {
           >
             {copySuccess ? <CheckCircle size={18}/> : <LinkIcon size={18}/>}
             {copySuccess ? "Copied!" : "Generate Friend Link"}
+          </button>
+          <button 
+            onClick={unbanSelf}
+            className="flex items-center gap-2 bg-red-500/10 border border-red-500/40 text-red-400 px-4 py-2 rounded hover:bg-red-500 hover:text-white transition-all font-bold"
+          >
+            <ShieldAlert size={18}/> Unban IP
           </button>
       </div>
 
