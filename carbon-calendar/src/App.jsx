@@ -43,7 +43,7 @@ const PortfolioPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 selection:text-purple-200">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 selection:text-purple-200 overflow-x-hidden">
       
       <Navbar onOpenBooking={() => setIsModalOpen(true)} />
       

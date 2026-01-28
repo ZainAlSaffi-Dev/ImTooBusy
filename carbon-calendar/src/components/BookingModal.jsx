@@ -281,7 +281,7 @@ const BookingModal = ({ isOpen, onClose }) => {
                 ) : (
                     /* --- ⚡ RESPONSIVE GRID CHANGE ⚡ --- */
                     /* Mobile: grid-cols-1 (Vertical Stack). Desktop: grid-cols-5 (Horizontal) */
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 flex-1">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 flex-1 overflow-x-auto md:overflow-x-visible">
                         {currentWeekDates.map(date => {
                             const dateStr = date.toISOString().split('T')[0];
                             const slots = availability[dateStr] || [];

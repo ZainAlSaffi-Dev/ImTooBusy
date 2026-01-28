@@ -187,7 +187,7 @@ const Projects = () => {
             PROJECTS
         </h2>
         <p className="text-xl text-gray-400 max-w-2xl font-mono">
-            /root/quant_research/algorithms && /src/software_engineering
+            /root/research
         </p>
       </div>
 
