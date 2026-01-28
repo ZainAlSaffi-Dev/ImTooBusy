@@ -13,6 +13,11 @@ EMAIL_SENDER = os.getenv("EMAIL_SENDER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 MEETING_LINK = os.getenv("DEFAULT_MEETING_LINK", "Link provided upon acceptance")
 
+# Resend (HTTP email) configuration
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+RESEND_FROM = os.getenv("RESEND_FROM")  # e.g., "hello@yourdomain.com" or "onboarding@resend.dev"
+RESEND_ENDPOINT = "https://api.resend.com/emails"
+
 # --- DISCORD LOGIC ---
 def send_discord_alert(booking):
     """Sends a Cyberpunk-style alert to your Discord."""
@@ -53,6 +58,32 @@ def send_discord_alert(booking):
 
 # --- EMAIL LOGIC ---
 def send_email(to_email, subject, body):
+    # Prefer Resend if configured
+    if RESEND_API_KEY:
+        from_email = RESEND_FROM or EMAIL_SENDER or "onboarding@resend.dev"
+        payload = {
+            "from": from_email,
+            "to": [to_email],
+            "subject": subject,
+            "text": body
+        }
+        try:
+            r = requests.post(
+                RESEND_ENDPOINT,
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+                json=payload,
+                timeout=10
+            )
+            if r.status_code in (200, 201):
+                print(f"✅ Email sent to {to_email} via Resend")
+                return
+            print(f"❌ Resend failed: {r.status_code} - {r.text}")
+            return
+        except Exception as e:
+            print(f"❌ Resend error: {e}")
+            return
+
+    # Fallback to SMTP (local/dev)
     if not EMAIL_SENDER or not EMAIL_PASSWORD:
         print("⚠️ Email credentials missing. Skipping email.")
         return
