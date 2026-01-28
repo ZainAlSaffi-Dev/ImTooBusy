@@ -126,10 +126,6 @@ def get_google_busy_times(start_iso, end_iso, force_refresh=False):
 
     normalized = []
     for event in all_events:
-        # 🟢 FIX 1: Respect "Show as Free" (Transparency)
-        if event.get('transparency') == 'transparent':
-            continue # Skip this event, it is marked as Free
-
         start_str = event['start'].get('dateTime') or event['start'].get('date')
         end_str = event['end'].get('dateTime') or event['end'].get('date')
         
@@ -158,6 +154,8 @@ def get_google_busy_times(start_iso, end_iso, force_refresh=False):
         is_buffered = False
         if any(w in title for w in BUFFER_KEYWORDS): is_buffered = True
         if color in BUFFER_COLOR_IDS: is_buffered = True
+
+        # NOTE: All calendar events block availability (transparency is ignored).
 
         # 🟢 FIX 2: Only Buffer NON-All-Day events
         # Buffering an all-day event makes it overlap into yesterday/tomorrow
