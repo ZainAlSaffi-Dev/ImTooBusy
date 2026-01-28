@@ -20,6 +20,10 @@ AEST = pytz.timezone('Australia/Brisbane')
 STANDARD_HOURS = {"start": 9, "end": 21}    # Public
 FRIEND_HOURS = {"start": 8, "end": 22}      # VIP Link Only
 
+# TRUSTED BYPASS (comma-separated)
+TRUSTED_EMAILS = [e.strip().lower() for e in os.getenv("TRUSTED_EMAILS", "").split(",") if e.strip()]
+TRUSTED_IPS = [ip.strip() for ip in os.getenv("TRUSTED_IPS", "").split(",") if ip.strip()]
+
 # --- LIFESPAN MANAGER (Replaces on_event) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -143,26 +147,51 @@ async def create_meeting(request: MeetingRequest, req: Request):
     
     # --- SECURITY LEVEL 0: IP CHECK ---
     client_ip = req.client.host
-    if database.is_ip_banned(client_ip):
+    is_friend = request.token and auth.verify_friend_token(request.token)
+    is_trusted_email = request.email.lower() in TRUSTED_EMAILS if request.email else False
+    is_trusted_ip = client_ip in TRUSTED_IPS
+    is_trusted = bool(is_friend or is_trusted_email or is_trusted_ip)
+
+    if not is_trusted and database.is_ip_banned(client_ip):
          raise HTTPException(status_code=403, detail="Your access has been restricted.")
 
     # --- SECURITY LEVEL 1: HONEYPOT (BOT TRAP) ---
-    if request.fax_number:
+    if request.fax_number and request.fax_number.strip():
         print(f"🤖 BOT DETECTED: {request.email} from {client_ip}")
-        database.ban_ip(client_ip, "Honeypot Triggered", duration_minutes=5256000)
+        if not is_trusted:
+            # Shorter ban to reduce false positives
+            database.ban_ip(client_ip, "Honeypot Triggered", duration_minutes=60)
+            try:
+                await bot_service.bot_instance.send_ban_alert(
+                    ip_address=client_ip,
+                    reason="Honeypot Triggered",
+                    duration_minutes=60,
+                    email=request.email,
+                    user_agent=req.headers.get("user-agent")
+                )
+            except Exception as e:
+                print(f"⚠️ Failed to send ban alert: {e}")
         deleted = database.wipe_troll_requests(request.email)
         print(f"💥 Nuclear Option: Deleted {deleted} requests from {request.email}")
         return {"success": True} 
 
     # --- SECURITY LEVEL 2: TROLL SHIELD ---
-    is_friend = request.token and auth.verify_friend_token(request.token)
-    
-    if not is_friend:
+    if not is_trusted:
         stats = database.check_spam_stats(request.email)
         if stats['pending'] >= 3:
             raise HTTPException(status_code=429, detail="Too many pending requests.")
         if stats['rejected'] >= 3:
             database.ban_ip(client_ip, "Troll Shield (3 Rejections)", duration_minutes=1440)
+            try:
+                await bot_service.bot_instance.send_ban_alert(
+                    ip_address=client_ip,
+                    reason="Troll Shield (3 Rejections)",
+                    duration_minutes=1440,
+                    email=request.email,
+                    user_agent=req.headers.get("user-agent")
+                )
+            except Exception as e:
+                print(f"⚠️ Failed to send ban alert: {e}")
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in 24 hours.")
 
     dt = datetime.fromisoformat(request.slot_iso)
