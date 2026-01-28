@@ -17,10 +17,16 @@ def verify_admin_password(plain_password: str):
     # simple string comparison (sufficient for MVP)
     return plain_password == ADMIN_PASSWORD
 
-def create_friend_token():
-    """Generates a token that expires at 11:59 PM tonight."""
+def create_friend_token(expires_in_minutes: int = None):
+    """Generates a token that expires at 11:59 PM tonight (default) or in N minutes."""
     now = datetime.now()
-    expiration = now.replace(hour=23, minute=59, second=59, microsecond=0)
+    if expires_in_minutes is not None:
+        expiration = now + timedelta(minutes=expires_in_minutes)
+    else:
+        expiration = now.replace(hour=23, minute=59, second=59, microsecond=0)
+        # Safety: if we're already past midnight edge, roll to next day
+        if expiration < now:
+            expiration = expiration + timedelta(days=1)
     
     to_encode = {
         "sub": "friend_access",
@@ -28,7 +34,7 @@ def create_friend_token():
         "type": "vip"
     }
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return encoded_jwt, expiration
 
 def verify_friend_token(token: str):
     """Returns True if token is valid and not expired."""

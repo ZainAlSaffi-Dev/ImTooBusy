@@ -105,6 +105,9 @@ class MeetingRequest(BaseModel):
 
 class StatusUpdate(BaseModel): status: str
 
+class FriendLinkRequest(BaseModel):
+    expires_in_minutes: Optional[int] = None
+
 class CancelRequest(BaseModel):
     reason: str; block_slot: bool 
 
@@ -375,9 +378,13 @@ def cancel_booking(booking_id: int, req: CancelRequest):
     return {"success": True}
 
 @app.post("/api/admin/generate-friend-link")
-def generate_link():
-    token = auth.create_friend_token()
-    return {"link": f"https://zainalsaffi.com/?token={token}"} # UPDATED TO PRODUCTION DOMAIN
+def generate_link(req: Optional[FriendLinkRequest] = None):
+    expires_in_minutes = req.expires_in_minutes if req else None
+    token, expires_at = auth.create_friend_token(expires_in_minutes)
+    return {
+        "link": f"https://zainalsaffi.com/?token={token}", # UPDATED TO PRODUCTION DOMAIN
+        "expires_at": expires_at.isoformat()
+    }
 
 # 2. Add the Login Endpoint
 @app.post("/api/admin/login")

@@ -15,6 +15,8 @@ const AdminDashboard = () => {
 
   // NEW: GENERATED LINK STATE
   const [generatedLink, setGeneratedLink] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState("");
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     // 1. Fetch immediately when the page loads
@@ -76,12 +78,45 @@ const AdminDashboard = () => {
   const generateFriendLink = async () => {
       const res = await fetch(`${API_BASE_URL}/api/admin/generate-friend-link`, { method: 'POST' });
       const data = await res.json();
-      setGeneratedLink(data.link);
-      navigator.clipboard.writeText(data.link);
-      alert("Link copied to clipboard! (Expires at midnight)");
-      // Clear message after 5 seconds
-      setTimeout(() => setGeneratedLink(null), 5000);
+      setGeneratedLink({ link: data.link, expiresAt: data.expires_at });
+      if (navigator?.clipboard) {
+          navigator.clipboard.writeText(data.link);
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 1500);
+      }
   };
+
+  const copyFriendLink = async () => {
+      if (!generatedLink?.link) return;
+      if (navigator?.clipboard) {
+          await navigator.clipboard.writeText(generatedLink.link);
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 1500);
+      }
+  };
+
+  const formatTimeRemaining = (ms) => {
+      if (ms <= 0) return "Expired";
+      const totalSeconds = Math.floor(ms / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+      if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+      return `${minutes}m ${seconds}s`;
+  };
+
+  useEffect(() => {
+      if (!generatedLink?.expiresAt) return;
+      const updateTimer = () => {
+          const diff = new Date(generatedLink.expiresAt) - new Date();
+          setTimeRemaining(formatTimeRemaining(diff));
+      };
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);
+  }, [generatedLink]);
 
   return (
     <div className="min-h-screen bg-carbon-bg text-carbon-text p-8 font-sans relative">
@@ -100,10 +135,33 @@ const AdminDashboard = () => {
             onClick={generateFriendLink}
             className="flex items-center gap-2 bg-carbon-primary/10 border border-carbon-primary/50 text-carbon-primary px-4 py-2 rounded hover:bg-carbon-primary hover:text-black transition-all font-bold"
           >
-            {generatedLink ? <CheckCircle size={18}/> : <LinkIcon size={18}/>}
-            {generatedLink ? "Link Copied!" : "Generate Friend Link"}
+            {copySuccess ? <CheckCircle size={18}/> : <LinkIcon size={18}/>}
+            {copySuccess ? "Copied!" : "Generate Friend Link"}
           </button>
       </div>
+
+      {generatedLink && (
+        <div className="mt-4 p-4 rounded-lg border border-white/10 bg-white/5 flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-xs font-mono text-gray-400">
+                <span className="w-2 h-2 rounded-full bg-carbon-primary"></span>
+                Expires in {timeRemaining}
+            </div>
+            <div className="flex flex-col md:flex-row gap-2">
+                <input 
+                    value={generatedLink.link}
+                    readOnly
+                    className="flex-1 bg-black/40 border border-white/10 rounded px-3 py-2 text-sm font-mono text-gray-200"
+                />
+                <button 
+                    onClick={copyFriendLink}
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded border border-carbon-primary/40 text-carbon-primary hover:bg-carbon-primary hover:text-black transition-all text-sm font-bold"
+                >
+                    <Copy size={16} />
+                    Copy
+                </button>
+            </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
