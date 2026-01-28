@@ -2,6 +2,7 @@ import os
 import os.path
 import time
 import pytz
+import uuid
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -24,14 +25,28 @@ EXTRA_CALENDAR_IDS = [c.strip() for c in extra_cals_str.split(",") if c.strip()]
 BUFFER_KEYWORDS = os.getenv("BUFFER_KEYWORDS", "work,shift,ambassador,class").lower().split(",")
 BUFFER_COLOR_IDS = os.getenv("BUFFER_COLOR_IDS", "").split(",")
 
+# Webhook configuration
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")  # e.g., https://your-backend.railway.app/api/calendar/webhook
+
 # ⚡ THE CACHE STORAGE ⚡
 _CALENDAR_CACHE = {}
-CACHE_DURATION = 300  # 5 Minutes
+_CACHE_TIMESTAMP = {}  # Track when each cache entry was created
+CACHE_DURATION = 30  # Reduced to 30 seconds for faster updates
+
+# Webhook channel tracking (in-memory, will be persisted to DB)
+_ACTIVE_CHANNELS = {}
 
 def clear_cache():
-    global _CALENDAR_CACHE
+    """Clear all cached calendar data."""
+    global _CALENDAR_CACHE, _CACHE_TIMESTAMP
     _CALENDAR_CACHE = {}
+    _CACHE_TIMESTAMP = {}
     print("🧹 Cache cleared!")
+
+def get_cache_timestamp(start_iso, end_iso):
+    """Get the timestamp when cache was last updated for a date range."""
+    cache_key = f"{start_iso}_{end_iso}"
+    return _CACHE_TIMESTAMP.get(cache_key, 0)
 
 def get_service():
     creds = None
@@ -68,10 +83,21 @@ def fetch_events_from_calendar(service, calendar_id, t_min, t_max):
         print(f"⚠️ Failed to fetch from {calendar_id[:15]}...: {e}")
         return []
 
-def get_google_busy_times(start_iso, end_iso):
-    # 1. CHECK CACHE
+def get_google_busy_times(start_iso, end_iso, force_refresh=False):
+    """
+    Get busy times from Google Calendar.
+    
+    Args:
+        start_iso: Start date/time in ISO format
+        end_iso: End date/time in ISO format
+        force_refresh: If True, bypass cache and fetch fresh data
+    
+    Returns:
+        List of normalized busy time slots
+    """
+    # 1. CHECK CACHE (unless force refresh requested)
     cache_key = f"{start_iso}_{end_iso}"
-    if cache_key in _CALENDAR_CACHE:
+    if not force_refresh and cache_key in _CALENDAR_CACHE:
         expiry, data = _CALENDAR_CACHE[cache_key]
         if time.time() < expiry:
             print("⚡ USING CACHED DATA")
@@ -149,8 +175,152 @@ def get_google_busy_times(start_iso, end_iso):
             "source": "GOOGLE_CAL"
         })
     
-    _CALENDAR_CACHE[cache_key] = (time.time() + CACHE_DURATION, normalized)
+    current_time = time.time()
+    _CALENDAR_CACHE[cache_key] = (current_time + CACHE_DURATION, normalized)
+    _CACHE_TIMESTAMP[cache_key] = current_time
     return normalized
+
+
+# ==========================================
+# GOOGLE CALENDAR WEBHOOK FUNCTIONS
+# ==========================================
+
+def setup_calendar_watch(calendar_id='primary'):
+    """
+    Set up a webhook channel to watch for changes on a Google Calendar.
+    Google will send POST requests to our webhook URL when events change.
+    
+    Returns:
+        dict with channel info or None if failed
+    """
+    if not WEBHOOK_URL:
+        print("⚠️ WEBHOOK_URL not configured, skipping webhook setup")
+        return None
+        
+    service = get_service()
+    if not service:
+        return None
+    
+    channel_id = str(uuid.uuid4())
+    
+    try:
+        # Channel expires in 7 days (maximum allowed by Google)
+        expiration = int((datetime.utcnow() + timedelta(days=7)).timestamp() * 1000)
+        
+        body = {
+            'id': channel_id,
+            'type': 'web_hook',
+            'address': WEBHOOK_URL,
+            'expiration': expiration
+        }
+        
+        response = service.events().watch(
+            calendarId=calendar_id,
+            body=body
+        ).execute()
+        
+        channel_info = {
+            'channel_id': response.get('id'),
+            'resource_id': response.get('resourceId'),
+            'calendar_id': calendar_id,
+            'expiration': response.get('expiration'),
+            'created_at': datetime.utcnow().isoformat()
+        }
+        
+        _ACTIVE_CHANNELS[channel_id] = channel_info
+        print(f"✅ Webhook channel set up for {calendar_id}: {channel_id}")
+        return channel_info
+        
+    except Exception as e:
+        print(f"❌ Failed to set up webhook for {calendar_id}: {e}")
+        return None
+
+
+def stop_calendar_watch(channel_id, resource_id):
+    """Stop watching a calendar channel."""
+    service = get_service()
+    if not service:
+        return False
+    
+    try:
+        service.channels().stop(body={
+            'id': channel_id,
+            'resourceId': resource_id
+        }).execute()
+        
+        if channel_id in _ACTIVE_CHANNELS:
+            del _ACTIVE_CHANNELS[channel_id]
+            
+        print(f"✅ Stopped watching channel: {channel_id}")
+        return True
+        
+    except Exception as e:
+        print(f"⚠️ Failed to stop channel {channel_id}: {e}")
+        return False
+
+
+def setup_all_calendar_watches():
+    """Set up webhook watches for all configured calendars."""
+    calendars = ['primary'] + EXTRA_CALENDAR_IDS
+    results = []
+    
+    for cal_id in calendars:
+        result = setup_calendar_watch(cal_id)
+        if result:
+            results.append(result)
+    
+    print(f"📡 Set up {len(results)}/{len(calendars)} calendar watches")
+    return results
+
+
+def handle_webhook_notification(channel_id, resource_id, resource_state):
+    """
+    Handle incoming webhook notification from Google Calendar.
+    Called when Google notifies us of a calendar change.
+    
+    Args:
+        channel_id: The ID of the notification channel
+        resource_id: The resource ID being watched
+        resource_state: The state of the resource (sync, exists, etc.)
+    
+    Returns:
+        bool indicating if cache was cleared
+    """
+    print(f"📬 Webhook received: channel={channel_id}, state={resource_state}")
+    
+    # Clear cache immediately on any change notification
+    if resource_state in ('exists', 'sync'):
+        clear_cache()
+        print("🔄 Cache invalidated due to calendar change")
+        return True
+    
+    return False
+
+
+def get_active_channels():
+    """Return list of active webhook channels."""
+    return list(_ACTIVE_CHANNELS.values())
+
+
+def renew_expiring_channels():
+    """Check and renew any channels expiring within 24 hours."""
+    now = datetime.utcnow().timestamp() * 1000
+    renewal_threshold = now + (24 * 60 * 60 * 1000)  # 24 hours from now
+    
+    renewed = []
+    for channel_id, info in list(_ACTIVE_CHANNELS.items()):
+        if info.get('expiration', 0) < renewal_threshold:
+            # Stop old channel
+            stop_calendar_watch(channel_id, info.get('resource_id'))
+            # Create new channel
+            new_channel = setup_calendar_watch(info.get('calendar_id'))
+            if new_channel:
+                renewed.append(new_channel)
+    
+    if renewed:
+        print(f"🔄 Renewed {len(renewed)} expiring channels")
+    
+    return renewed
 
 def create_google_event(booking_data):
     # (Keep this function exactly as it was in your previous version)

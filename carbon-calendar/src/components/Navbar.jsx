@@ -1,5 +1,5 @@
 import React from 'react';
-import { Terminal, Calendar, User, Code } from 'lucide-react';
+import { Terminal, Calendar, User, Code, Linkedin } from 'lucide-react';
 
 const Navbar = ({ onOpenBooking }) => {
     
@@ -31,6 +31,10 @@ const Navbar = ({ onOpenBooking }) => {
                         <User size={18} />
                         <span>ABOUT</span>
                     </a>
+                    <a href="#contact" className="flex items-center gap-2 text-carbon-text/70 hover:text-[#0A66C2] transition-colors text-sm font-medium tracking-wide">
+                        <Linkedin size={18} />
+                        <span>CONTACT</span>
+                    </a>
                     
                     <button 
                         onClick={onOpenBooking}
@@ -41,8 +45,15 @@ const Navbar = ({ onOpenBooking }) => {
                 </div>
 
                 {/* --- MOBILE MENU BUTTON (Visible ONLY on Mobile) --- */}
-                <div className="flex md:hidden items-center gap-4">
-                     {/* Compact Booking Button for Mobile */}
+                <div className="flex md:hidden items-center gap-2">
+                    {/* Contact Link for Mobile */}
+                    <a 
+                        href="#contact"
+                        className="p-2 rounded border border-[#0A66C2]/30 text-[#0A66C2] hover:bg-[#0A66C2]/20 transition-all"
+                    >
+                        <Linkedin size={18} />
+                    </a>
+                    {/* Compact Booking Button for Mobile */}
                     <button 
                         onClick={onOpenBooking}
                         className="flex items-center gap-2 bg-carbon-primary/20 border border-carbon-primary/50 px-3 py-2 rounded text-carbon-primary text-xs font-bold hover:bg-carbon-primary hover:text-black transition-all">

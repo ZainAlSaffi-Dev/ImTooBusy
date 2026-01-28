@@ -51,7 +51,7 @@ const workHistory = [
         id: 'optiver-futurefocus',
         role: "Future Focus Program",
         company: "Optiver",
-        date: "Nov 2025 - Present",
+        date: "Sep 2025 - Oct 2025",
         logo: "/logos/optiver2.png",
         description: [
             "Selected as part of 50 candidates out of 5,000+ to participate in a series of exercises involving market making, volatility calculations, and software engineering design.",
@@ -192,40 +192,80 @@ const leadershipHistory = [
     }
 ];
 
-// EducationCard: SCALED UP (h-16 -> h-24, Larger Text)
+// EducationCard: Mobile-first layout with logo above date bar
 const EducationCard = ({ data }) => (
-    <div className="relative mb-16"> {/* Increased bottom margin */}
-        <div className="w-full p-10 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm hover:border-carbon-primary/30 transition-all group">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-10">
-
-                {/* Logo Box - INCREASED to h-24 */}
-                <div className="shrink-0">
+    <div className="relative mb-8 md:mb-16">
+        <div className="w-full p-6 md:p-10 rounded-2xl md:rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm hover:border-carbon-primary/30 transition-all group">
+            
+            {/* MOBILE LAYOUT: Stacked vertically */}
+            <div className="flex flex-col gap-4 md:gap-0">
+                
+                {/* Mobile: Logo centered at top */}
+                <div className="flex justify-center md:hidden mb-2">
                     <img 
                         src={data.logo} 
                         alt={data.company}
-                        className="h-16 w-auto object-contain object-left grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-300"
+                        className="h-12 w-auto object-contain grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-300"
                     />
                 </div>
+                
+                {/* Mobile: Full-width date bar */}
+                <div className="w-full md:hidden">
+                    <span className="block w-full text-center text-sm font-mono text-carbon-primary border border-carbon-primary/30 px-4 py-2 rounded bg-carbon-primary/5">
+                        {data.date}
+                    </span>
+                </div>
 
-                {/* Content */}
-                <div className="flex-1 w-full">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
-                        <h3 className="text-4xl font-bold text-white group-hover:text-carbon-primary transition-colors">
-                            {data.role}
-                        </h3>
-                        <span className="text-base font-mono text-carbon-primary border border-carbon-primary/30 px-4 py-2 rounded whitespace-nowrap bg-carbon-primary/5">
-                            {data.date}
-                        </span>
+                {/* DESKTOP LAYOUT: Side by side */}
+                <div className="hidden md:flex md:flex-row items-start md:items-center gap-10">
+                    {/* Logo Box */}
+                    <div className="shrink-0">
+                        <img 
+                            src={data.logo} 
+                            alt={data.company}
+                            className="h-16 w-auto object-contain object-left grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-300"
+                        />
                     </div>
 
-                    <p className="text-2xl text-gray-300 font-medium mb-6">{data.company}</p>
-                    <p className="text-xl text-gray-300 leading-relaxed mb-8">
+                    {/* Content */}
+                    <div className="flex-1 w-full">
+                        <div className="flex flex-row items-center justify-between mb-4 gap-4">
+                            <h3 className="text-4xl font-bold text-white group-hover:text-carbon-primary transition-colors">
+                                {data.role}
+                            </h3>
+                            <span className="text-base font-mono text-carbon-primary border border-carbon-primary/30 px-4 py-2 rounded whitespace-nowrap bg-carbon-primary/5">
+                                {data.date}
+                            </span>
+                        </div>
+
+                        <p className="text-2xl text-gray-300 font-medium mb-6">{data.company}</p>
+                        <p className="text-xl text-gray-300 leading-relaxed mb-8">
+                            {data.description}
+                        </p>
+
+                        <div className="flex flex-wrap gap-3">
+                            {data.tech.map(t => (
+                                <span key={t} className="text-base font-medium text-carbon-secondary bg-carbon-secondary/10 px-4 py-2 rounded border border-carbon-secondary/10 shadow-[0_0_10px_rgba(233,213,255,0.05)]">
+                                    {t}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile Content (below logo and date) */}
+                <div className="md:hidden mt-2">
+                    <h3 className="text-2xl font-bold text-white group-hover:text-carbon-primary transition-colors mb-1">
+                        {data.role}
+                    </h3>
+                    <p className="text-lg text-gray-300 font-medium mb-3">{data.company}</p>
+                    <p className="text-base text-gray-300 leading-relaxed mb-4">
                         {data.description}
                     </p>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2">
                         {data.tech.map(t => (
-                            <span key={t} className="text-base font-medium text-carbon-secondary bg-carbon-secondary/10 px-4 py-2 rounded border border-carbon-secondary/10 shadow-[0_0_10px_rgba(233,213,255,0.05)]">
+                            <span key={t} className="text-xs font-medium text-carbon-secondary bg-carbon-secondary/10 px-2 py-1 rounded border border-carbon-secondary/10">
                                 {t}
                             </span>
                         ))}
@@ -236,56 +276,102 @@ const EducationCard = ({ data }) => (
     </div>
 );
 
-// FeedItem: SCALED UP (h-12 -> h-20, Larger Text & Padding)
+// FeedItem: Mobile-first layout with logo above date bar
 const FeedItem = ({ data, alignRight }) => (
-    <div className={`relative flex flex-col md:flex-row gap-12 ${alignRight ? 'md:flex-row-reverse' : ''}`}>
+    <div className={`relative flex flex-col md:flex-row gap-6 md:gap-12 ${alignRight ? 'md:flex-row-reverse' : ''}`}>
         {/* The Dot */}
-        <div className="absolute left-0 md:left-1/2 w-5 h-5 bg-carbon-bg border-4 border-carbon-primary rounded-full translate-y-2 md:-translate-x-1/2 z-10 shadow-[0_0_15px_#a855f7]" />
+        <div className="absolute left-0 md:left-1/2 w-4 md:w-5 h-4 md:h-5 bg-carbon-bg border-3 md:border-4 border-carbon-primary rounded-full translate-y-2 md:-translate-x-1/2 z-10 shadow-[0_0_15px_#a855f7]" />
 
         {/* Spacer */}
         <div className="hidden md:block flex-1" />
 
         {/* Content Card */}
-        <div className="flex-1 pl-10 md:pl-0">
-            <div className="p-10 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors backdrop-blur-sm group">
+        <div className="flex-1 pl-8 md:pl-0">
+            <div className="p-5 md:p-10 rounded-xl md:rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors backdrop-blur-sm group">
                 
-                <div className="flex items-center justify-between mb-6">
-                    <span className="text-sm font-bold font-mono text-carbon-primary border border-carbon-primary/30 px-3 py-1.5 rounded">
+                {/* MOBILE LAYOUT: Logo -> Date Bar -> Content */}
+                <div className="md:hidden flex flex-col gap-3">
+                    {/* Logo centered */}
+                    <div className="flex justify-center">
+                        <img 
+                            src={data.logo} 
+                            alt={data.company}
+                            className="h-10 w-auto max-w-[120px] object-contain grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_12px_rgba(168,85,247,0.6)] transition-all duration-300"
+                        />
+                    </div>
+                    
+                    {/* Full-width date bar */}
+                    <span className="block w-full text-center text-xs font-bold font-mono text-carbon-primary border border-carbon-primary/30 px-3 py-2 rounded bg-carbon-primary/5">
                         {data.date}
                     </span>
+                    
+                    {/* Title and company */}
+                    <h3 className="text-xl font-bold text-white group-hover:text-carbon-primary transition-colors">
+                        {data.role}
+                    </h3>
+                    <p className="text-base text-gray-400 font-medium -mt-2 mb-2">{data.company}</p>
 
-                    {/* Logo - INCREASED to h-20 */}
-                    <img 
-                        src={data.logo} 
-                        alt={data.company}
-                        className="h-16 w-auto max-w-[160px] object-contain object-right grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_12px_rgba(168,85,247,0.6)] transition-all duration-300"
-                    />
+                    {/* Description */}
+                    <div className="text-sm text-gray-200 leading-relaxed mb-3">
+                        {Array.isArray(data.description) ? (
+                            <ul className="list-disc pl-4 space-y-2">
+                                {data.description.map((line, i) => (
+                                    <li key={i}>{line}</li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p>{data.description}</p>
+                        )}
+                    </div>
+
+                    {/* Tech tags */}
+                    <div className="flex flex-wrap gap-2">
+                        {data.tech.map(t => (
+                            <span key={t} className="text-xs font-bold text-carbon-secondary bg-carbon-secondary/10 px-2 py-1 rounded">
+                                {t}
+                            </span>
+                        ))}
+                    </div>
                 </div>
 
-                <h3 className="text-3xl font-bold text-white group-hover:text-carbon-primary transition-colors mb-2">
-                    {data.role}
-                </h3>
-                <p className="text-xl text-gray-400 font-medium mb-6">{data.company}</p>
-
-                {/* Description Text Increased to text-lg */}
-                <div className="text-lg text-gray-200 leading-relaxed mb-6">
-                    {Array.isArray(data.description) ? (
-                        <ul className="list-disc pl-5 space-y-3">
-                            {data.description.map((line, i) => (
-                                <li key={i}>{line}</li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p>{data.description}</p>
-                    )}
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                    {data.tech.map(t => (
-                        <span key={t} className="text-sm font-bold text-carbon-secondary bg-carbon-secondary/10 px-3 py-1.5 rounded">
-                            {t}
+                {/* DESKTOP LAYOUT: Original side-by-side */}
+                <div className="hidden md:block">
+                    <div className="flex items-center justify-between mb-6">
+                        <span className="text-sm font-bold font-mono text-carbon-primary border border-carbon-primary/30 px-3 py-1.5 rounded">
+                            {data.date}
                         </span>
-                    ))}
+
+                        <img 
+                            src={data.logo} 
+                            alt={data.company}
+                            className="h-16 w-auto max-w-[160px] object-contain object-right grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_12px_rgba(168,85,247,0.6)] transition-all duration-300"
+                        />
+                    </div>
+
+                    <h3 className="text-3xl font-bold text-white group-hover:text-carbon-primary transition-colors mb-2">
+                        {data.role}
+                    </h3>
+                    <p className="text-xl text-gray-400 font-medium mb-6">{data.company}</p>
+
+                    <div className="text-lg text-gray-200 leading-relaxed mb-6">
+                        {Array.isArray(data.description) ? (
+                            <ul className="list-disc pl-5 space-y-3">
+                                {data.description.map((line, i) => (
+                                    <li key={i}>{line}</li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p>{data.description}</p>
+                        )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                        {data.tech.map(t => (
+                            <span key={t} className="text-sm font-bold text-carbon-secondary bg-carbon-secondary/10 px-3 py-1.5 rounded">
+                                {t}
+                            </span>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
@@ -294,10 +380,10 @@ const FeedItem = ({ data, alignRight }) => (
 
 const ExperienceFeed = () => {
     return (
-        <section className="py-24 px-6 max-w-7xl mx-auto relative">
+        <section className="py-12 md:py-24 px-4 md:px-6 max-w-7xl mx-auto relative">
 
             {/* 0. EDUCATION HEADER */}
-            <h2 className="text-4xl font-bold mb-12 flex items-center gap-4">
+            <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-12 flex items-center gap-2 md:gap-4">
                 <span className="text-carbon-primary">#</span> EDUCATION
             </h2>
 
@@ -307,13 +393,13 @@ const ExperienceFeed = () => {
             ))}
 
             {/* 1. PROFESSIONAL EXPERIENCE HEADER */}
-            <h2 className="text-4xl font-bold mb-16 flex items-center gap-4 mt-32">
+            <h2 className="text-2xl md:text-4xl font-bold mb-8 md:mb-16 flex items-center gap-2 md:gap-4 mt-16 md:mt-32">
                 <span className="text-carbon-primary">#</span> EXPERIENCE
             </h2>
 
-            <div className="relative space-y-20 mb-40">
+            <div className="relative space-y-10 md:space-y-20 mb-20 md:mb-40">
                 {/* Timeline Line for Jobs */}
-                <div className="absolute left-8 md:left-1/2 top-4 bottom-4 w-1 bg-gradient-to-b from-carbon-primary/50 to-transparent md:-translate-x-1/2" />
+                <div className="absolute left-[7px] md:left-1/2 top-4 bottom-4 w-0.5 md:w-1 bg-gradient-to-b from-carbon-primary/50 to-transparent md:-translate-x-1/2" />
 
                 {workHistory.map((exp, index) => (
                     <FeedItem key={exp.id} data={exp} alignRight={index % 2 === 0} />
@@ -321,13 +407,13 @@ const ExperienceFeed = () => {
             </div>
 
             {/* 2. LEADERSHIP HEADER */}
-            <h2 className="text-4xl font-bold mb-16 flex items-center gap-4">
+            <h2 className="text-2xl md:text-4xl font-bold mb-8 md:mb-16 flex items-center gap-2 md:gap-4">
                 <span className="text-carbon-secondary">#</span> LEADERSHIP
             </h2>
 
-            <div className="relative space-y-20">
+            <div className="relative space-y-10 md:space-y-20">
                 {/* Timeline Line for Leadership */}
-                <div className="absolute left-8 md:left-1/2 top-4 bottom-4 w-1 bg-gradient-to-b from-carbon-secondary/50 to-transparent md:-translate-x-1/2" />
+                <div className="absolute left-[7px] md:left-1/2 top-4 bottom-4 w-0.5 md:w-1 bg-gradient-to-b from-carbon-secondary/50 to-transparent md:-translate-x-1/2" />
 
                 {leadershipHistory.map((exp, index) => (
                     <FeedItem key={exp.id} data={exp} alignRight={index % 2 === 0} />

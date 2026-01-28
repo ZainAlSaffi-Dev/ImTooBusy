@@ -1,6 +1,7 @@
 import os
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
@@ -43,10 +44,30 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(bot_service.start_bot())
     print("🤖 Discord Bot Service Launched")
     
+    # 4. Set up Google Calendar Webhooks (if configured)
+    if os.getenv("WEBHOOK_URL"):
+        try:
+            gcal.setup_all_calendar_watches()
+            print("📡 Calendar Webhooks Initialized")
+            # Start background task to renew expiring channels
+            asyncio.create_task(webhook_renewal_task())
+        except Exception as e:
+            print(f"⚠️ Webhook setup failed (non-fatal): {e}")
+    
     yield  # Application runs here
     
     # --- SHUTDOWN LOGIC ---
     print("🛑 System Shutting Down...")
+
+
+async def webhook_renewal_task():
+    """Background task to renew webhook channels before they expire."""
+    while True:
+        try:
+            await asyncio.sleep(6 * 60 * 60)  # Check every 6 hours
+            gcal.renew_expiring_channels()
+        except Exception as e:
+            print(f"⚠️ Webhook renewal error: {e}")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -189,7 +210,26 @@ async def create_meeting(request: MeetingRequest, req: Request):
     return {"success": True}
 
 @app.get("/api/availability")
-def get_availability(start_date: str, end_date: str, duration: int, token: str = None):
+def get_availability(
+    start_date: str, 
+    end_date: str, 
+    duration: int, 
+    token: str = None,
+    force_refresh: bool = False
+):
+    """
+    Get available time slots for booking.
+    
+    Args:
+        start_date: Start date (YYYY-MM-DD)
+        end_date: End date (YYYY-MM-DD)
+        duration: Meeting duration in minutes
+        token: Optional friend token for VIP access
+        force_refresh: If true, bypass cache and fetch fresh data
+    
+    Returns:
+        Dict with available slots per date and cache metadata
+    """
     # 1. Determine User Type (Public vs Friend)
     is_friend = False
     if token:
@@ -200,7 +240,13 @@ def get_availability(start_date: str, end_date: str, duration: int, token: str =
     # 2. Fetch ALL Sources of "Busy"
     local_bookings = database.get_bookings_for_range(start_date, end_date)
     local_blocks = database.get_blocks_for_range(start_date, end_date)
-    google_busy = gcal.get_google_busy_times(start_date + "T00:00:00", end_date + "T23:59:59")
+    
+    # Pass force_refresh to calendar fetch
+    google_busy = gcal.get_google_busy_times(
+        start_date + "T00:00:00", 
+        end_date + "T23:59:59",
+        force_refresh=force_refresh
+    )
     
     occupied = local_bookings + local_blocks + google_busy
     
@@ -229,7 +275,57 @@ def get_availability(start_date: str, end_date: str, duration: int, token: str =
         valid = [s for s in future_candidates if not is_overlapping(s, duration, occupied)]
         results[date_str] = valid
         current += timedelta(days=1)
-    return results
+    
+    # Get cache timestamp for freshness indicator
+    cache_key_start = start_date + "T00:00:00"
+    cache_key_end = end_date + "T23:59:59"
+    cache_timestamp = gcal.get_cache_timestamp(cache_key_start, cache_key_end)
+    
+    return {
+        "slots": results,
+        "cache_timestamp": cache_timestamp,
+        "cache_age_seconds": int(datetime.now().timestamp() - cache_timestamp) if cache_timestamp else 0
+    }
+
+
+# ==========================================
+# GOOGLE CALENDAR WEBHOOK ENDPOINT
+# ==========================================
+
+@app.post("/api/calendar/webhook")
+async def calendar_webhook(
+    request: Request,
+    x_goog_channel_id: Optional[str] = Header(None, alias="X-Goog-Channel-ID"),
+    x_goog_resource_id: Optional[str] = Header(None, alias="X-Goog-Resource-ID"),
+    x_goog_resource_state: Optional[str] = Header(None, alias="X-Goog-Resource-State"),
+    x_goog_message_number: Optional[str] = Header(None, alias="X-Goog-Message-Number")
+):
+    """
+    Webhook endpoint for Google Calendar push notifications.
+    Google sends POST requests here when calendar events change.
+    """
+    print(f"📬 Webhook received: channel={x_goog_channel_id}, state={x_goog_resource_state}, msg={x_goog_message_number}")
+    
+    # Handle the webhook notification
+    if x_goog_channel_id and x_goog_resource_id:
+        gcal.handle_webhook_notification(
+            channel_id=x_goog_channel_id,
+            resource_id=x_goog_resource_id,
+            resource_state=x_goog_resource_state or "unknown"
+        )
+    
+    # Always return 200 OK to acknowledge receipt
+    return Response(status_code=200)
+
+
+@app.post("/api/calendar/refresh")
+def force_calendar_refresh():
+    """
+    Manually trigger a cache clear to force fresh calendar data.
+    Can be called from admin dashboard or Discord bot.
+    """
+    gcal.clear_cache()
+    return {"success": True, "message": "Calendar cache cleared"}
 
 
 @app.patch("/api/admin/bookings/{booking_id}")

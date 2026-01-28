@@ -1,6 +1,8 @@
 import { X, Calendar, Clock, ArrowRight, ArrowLeft, CheckCircle, Globe, AlertTriangle, RefreshCcw, Zap } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { API_BASE_URL } from '../config'; 
+
+const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
 
 const BookingModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
@@ -23,6 +25,11 @@ const BookingModal = ({ isOpen, onClose }) => {
     const [customMode, setCustomMode] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', topic: '' });
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // AUTO-REFRESH STATE
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [lastRefresh, setLastRefresh] = useState(null);
+    const refreshIntervalRef = useRef(null);
   
     useEffect(() => {
       const params = new URLSearchParams(window.location.search);
@@ -70,25 +77,63 @@ const BookingModal = ({ isOpen, onClose }) => {
              dateObj.getFullYear() === today.getFullYear();
   };
 
+  // Fetch availability function (reusable for initial load and refresh)
+  const fetchAvailability = useCallback(async (forceRefresh = false, silent = false) => {
+    if (currentWeekDates.length === 0) return;
+    
+    const startStr = currentWeekDates[0].toISOString().split('T')[0];
+    const endStr = currentWeekDates[currentWeekDates.length-1].toISOString().split('T')[0];
+    const mode = customMode ? 'custom' : 'standard';
+    
+    if (!silent) setLoading(true);
+    if (forceRefresh) setIsRefreshing(true);
+    
+    let url = `${API_BASE_URL}/api/availability?start_date=${startStr}&end_date=${endStr}&duration=${duration}&mode=${mode}`;
+    if (friendToken) url += `&token=${friendToken}`;
+    if (forceRefresh) url += `&force_refresh=true`;
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        // Handle both old format (direct slots) and new format (with slots property)
+        const slots = data.slots || data;
+        setAvailability(slots);
+        setLastRefresh(new Date());
+    } catch (err) {
+        console.error('Failed to fetch availability:', err);
+    } finally {
+        setLoading(false);
+        setIsRefreshing(false);
+    }
+  }, [currentWeekDates, customMode, duration, friendToken]);
+
+  // Initial fetch when entering step 2
   useEffect(() => {
     if (step === 2) {
-        const startStr = currentWeekDates[0].toISOString().split('T')[0];
-        const endStr = currentWeekDates[currentWeekDates.length-1].toISOString().split('T')[0];
-        const mode = customMode ? 'custom' : 'standard';
-        
-        setLoading(true);
-        let url = `${API_BASE_URL}/api/availability?start_date=${startStr}&end_date=${endStr}&duration=${duration}&mode=${mode}`;
-        if (friendToken) url += `&token=${friendToken}`;
-
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                setAvailability(data);
-                setLoading(false);
-            })
-            .catch(err => setLoading(false));
+        fetchAvailability(false, false);
     }
   }, [step, weekOffset, duration, customMode, friendToken]);
+
+  // Auto-refresh polling when on step 2
+  useEffect(() => {
+    if (step === 2) {
+        // Set up auto-refresh interval
+        refreshIntervalRef.current = setInterval(() => {
+            fetchAvailability(false, true); // Silent refresh
+        }, AUTO_REFRESH_INTERVAL);
+        
+        return () => {
+            if (refreshIntervalRef.current) {
+                clearInterval(refreshIntervalRef.current);
+            }
+        };
+    }
+  }, [step, fetchAvailability]);
+
+  // Manual refresh handler
+  const handleManualRefresh = () => {
+    fetchAvailability(true, false);
+  };
 
   const enableCustomMode = () => { setCustomMode(true); setWeekOffset(1); };
   const disableCustomMode = () => { setCustomMode(false); setWeekOffset(0); };
@@ -184,11 +229,28 @@ const BookingModal = ({ isOpen, onClose }) => {
                         <div className="text-carbon-primary font-bold text-sm md:text-base">{userTimezone}</div>
                     </div>
                     
-                    <div className="flex gap-2 w-full md:w-auto">
+                    <div className="flex gap-2 w-full md:w-auto items-center">
+                        {/* Refresh Button */}
+                        <button 
+                            onClick={handleManualRefresh}
+                            disabled={isRefreshing}
+                            className={`p-2 hover:bg-white/10 rounded border border-white/10 transition-all ${isRefreshing ? 'opacity-50' : ''}`}
+                            title="Refresh availability"
+                        >
+                            <RefreshCcw size={16} className={`text-carbon-primary ${isRefreshing ? 'animate-spin' : ''}`} />
+                        </button>
                         <button onClick={() => setWeekOffset(weekOffset - 1)} className="flex-1 md:flex-none p-2 hover:bg-white/10 rounded text-sm font-bold border border-white/10">← Prev</button>
                         <button onClick={() => setWeekOffset(weekOffset + 1)} className="flex-1 md:flex-none p-2 hover:bg-white/10 rounded text-sm font-bold border border-white/10">Next →</button>
                     </div>
                 </div>
+
+                {/* Auto-refresh indicator */}
+                {lastRefresh && (
+                    <div className="text-xs text-gray-600 font-mono mb-2 flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`}></span>
+                        {isRefreshing ? 'Refreshing...' : `Live • Auto-updates every 30s`}
+                    </div>
+                )}
 
                 <h3 className="text-xl md:text-2xl font-bold text-white text-center mb-6 tracking-wide">
                     {getMonthTitle()}

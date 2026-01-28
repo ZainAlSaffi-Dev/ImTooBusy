@@ -85,13 +85,13 @@ const About = ({ isUnlocked }) => {
         initial={{ opacity: 0, y: 100, height: 0, overflow: 'hidden' }}
         animate={isUnlocked ? { opacity: 1, y: 0, height: 'auto', overflow: 'visible' } : {}}
         transition={{ duration: 1, ease: "easeOut" }}
-        className="py-24 px-6 max-w-7xl mx-auto"
+        className="py-12 md:py-24 px-4 md:px-6 max-w-7xl mx-auto"
     >
       
       {/* Section Header */}
-      <div className="mb-20 text-center">
+      <div className="mb-10 md:mb-20 text-center">
         <motion.h2 
-          className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight"
+          className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight"
         >
           WHO_AM_I<span className="text-carbon-primary">?</span>
         </motion.h2>
@@ -103,7 +103,7 @@ const About = ({ isUnlocked }) => {
         />
       </div>
 
-      <div className="space-y-32">
+      <div className="space-y-16 md:space-y-32">
         {aboutSections.map((section, index) => {
           const isEven = index % 2 === 0;
           
@@ -115,7 +115,7 @@ const About = ({ isUnlocked }) => {
               whileInView={isUnlocked ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true, margin: "-100px" }}
-              className={`flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 md:gap-24 items-center group`}
+              className={`flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 md:gap-24 items-center group`}
             >
               
               {/* IMAGE SIDE */}
@@ -123,8 +123,10 @@ const About = ({ isUnlocked }) => {
                 {/* The Purple Underglow */}
                 <div className="absolute -inset-4 bg-purple-600/20 blur-2xl rounded-full opacity-75 group-hover:opacity-100 group-hover:bg-purple-600/30 transition-all duration-700 pointer-events-none" />
                 
-                <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
-                  <div className="aspect-[4/5] md:aspect-[4/3] relative">
+                <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-carbon-bg">
+                  {/* Mobile: Square aspect ratio with object-contain to show full image */}
+                  {/* Desktop: 4/3 aspect ratio with object-cover for full bleed */}
+                  <div className="aspect-square md:aspect-[4/3] relative bg-carbon-bg">
                     {/* Placeholder Text */}
                     <div className="absolute inset-0 flex items-center justify-center text-gray-800 font-mono text-xs z-0">
                         IMG: {section.title}
@@ -133,7 +135,7 @@ const About = ({ isUnlocked }) => {
                     <img 
                       src={section.image} 
                       alt={section.title} 
-                      className="w-full h-full object-cover grayscale brightness-90 contrast-125 group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-105 transition-all duration-700 ease-in-out relative z-10"
+                      className="w-full h-full object-contain md:object-cover grayscale brightness-90 contrast-125 group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-105 transition-all duration-700 ease-in-out relative z-10"
                       onError={(e) => {
                           // Fallback to avoid broken image icon
                           e.target.style.display = 'none';
@@ -148,31 +150,31 @@ const About = ({ isUnlocked }) => {
               </div>
 
               {/* TEXT SIDE */}
-              <div className="w-full md:w-1/2 space-y-6 text-center md:text-left">
+              <div className="w-full md:w-1/2 space-y-4 md:space-y-6 text-center md:text-left">
                 <div className={`flex flex-col ${isEven ? 'md:items-start' : 'md:items-end'}`}>
                   
-                  <div className="flex items-center gap-2 text-carbon-primary font-mono text-sm tracking-widest mb-2 uppercase">
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-carbon-primary font-mono text-xs md:text-sm tracking-widest mb-2 uppercase">
                     {section.icon}
                     <span>0{index + 1} // {section.title}</span>
                   </div>
                   
-                  <h3 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                  <h3 className="text-2xl md:text-4xl font-bold text-white mb-2">
                     {section.subtitle}
                   </h3>
                   
-                  <div className="h-1 w-20 bg-white/10 rounded-full mb-6" />
+                  <div className="h-1 w-16 md:w-20 bg-white/10 rounded-full mb-4 md:mb-6 mx-auto md:mx-0" />
                 </div>
 
-                <div className={`text-gray-400 leading-relaxed text-lg space-y-4 ${isEven ? 'md:text-left' : 'md:text-right'}`}>
+                <div className={`text-gray-400 leading-relaxed text-base md:text-lg space-y-3 md:space-y-4 ${isEven ? 'md:text-left' : 'md:text-right'}`}>
                   {section.text}
                 </div>
 
                 {/* Tags */}
-                <div className={`flex flex-wrap gap-2 pt-4 ${isEven ? 'justify-center md:justify-start' : 'justify-center md:justify-end'}`}>
+                <div className={`flex flex-wrap gap-2 pt-2 md:pt-4 ${isEven ? 'justify-center md:justify-start' : 'justify-center md:justify-end'}`}>
                   {section.tags.map(tag => (
                     <span 
                       key={tag} 
-                      className="px-3 py-1 text-xs font-mono text-purple-300 bg-purple-500/10 border border-purple-500/20 rounded-full"
+                      className="px-2 md:px-3 py-1 text-xs font-mono text-purple-300 bg-purple-500/10 border border-purple-500/20 rounded-full"
                     >
                       #{tag}
                     </span>

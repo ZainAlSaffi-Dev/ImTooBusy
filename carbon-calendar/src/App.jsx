@@ -9,6 +9,7 @@ import AdminLogin from './components/AdminLogin';
 import TerminalGate from './components/TerminalGate';
 import Projects from './components/Projects'; 
 import About from './components/About';      
+import Contact from './components/Contact';
 
 // Simple Footer Component
 const Footer = () => (
@@ -73,6 +74,12 @@ const PortfolioPage = () => {
         <div id="projects" className="relative z-10 bg-[#080808]">
             <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
             <Projects />
+        </div>
+
+        {/* 6. CONTACT */}
+        <div id="contact" className="relative z-10 bg-black">
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-[#0A66C2]/30 to-transparent" />
+            <Contact />
         </div>
 
       </main>
