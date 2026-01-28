@@ -3,11 +3,23 @@ import os
 from datetime import datetime, timedelta
 
 # --- PERSISTENCE SETUP ---
-# This ensures the DB lives in the persistent volume
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-os.makedirs(DATA_DIR, exist_ok=True)
-DB_NAME = os.path.join(DATA_DIR, "carbon.db")
+# Default: store DB in backend/data
+# Override with DATABASE_PATH or DB_PATH to use a persistent volume (e.g., /data/carbon.db)
+CUSTOM_DB_PATH = os.getenv("DATABASE_PATH") or os.getenv("DB_PATH")
+
+if CUSTOM_DB_PATH:
+    if os.path.isdir(CUSTOM_DB_PATH):
+        DB_NAME = os.path.join(CUSTOM_DB_PATH, "carbon.db")
+    else:
+        DB_NAME = CUSTOM_DB_PATH
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.path.join(BASE_DIR, "data")
+    DB_NAME = os.path.join(DATA_DIR, "carbon.db")
+
+# Ensure directory exists
+db_dir = os.path.dirname(DB_NAME)
+os.makedirs(db_dir, exist_ok=True)
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)

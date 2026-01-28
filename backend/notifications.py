@@ -173,3 +173,29 @@ Zain Al-Saffi
     # 2. Send Copy to Admin (YOU)
     admin_subject = f"❌ REJECTED: {booking['name']} ({booking['date']} @ {booking['time']})"
     send_email(EMAIL_SENDER, admin_subject, body)
+
+def send_cancellation_email(booking, reason):
+    subject = f"Meeting Cancelled: {booking['topic']}"
+    body = f"""
+Hi {booking['name']},
+
+Unfortunately, I’ve had to cancel our meeting:
+
+Topic: {booking['topic']}
+Date: {booking['date']}
+Time: {booking['time']} (AEST)
+
+Reason: {reason}
+
+If you’d like, feel free to book another time.
+
+Best,
+Zain Al-Saffi
+    """
+
+    # 1. Send to Client
+    send_email(booking['email'], subject, body)
+
+    # 2. Send Copy to Admin (YOU)
+    admin_subject = f"⚠️ CANCELLED: {booking['name']} ({booking['date']} @ {booking['time']})"
+    send_email(EMAIL_SENDER, admin_subject, body)

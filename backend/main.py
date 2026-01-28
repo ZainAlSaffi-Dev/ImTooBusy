@@ -403,6 +403,12 @@ def cancel_booking(booking_id: int, req: CancelRequest):
         start_dt = datetime.strptime(booking['time'], "%H:%M")
         end_dt = start_dt + timedelta(minutes=booking['duration'])
         database.add_block(booking['date'], booking['time'], end_dt.strftime("%H:%M"), f"Cancelled: {req.reason}")
+
+    # 3. Send cancellation email
+    try:
+        notifications.send_cancellation_email(booking, req.reason)
+    except Exception as e:
+        print(f"⚠️ Failed to send cancellation email: {e}")
     
     return {"success": True}
 
