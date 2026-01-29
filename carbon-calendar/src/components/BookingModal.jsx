@@ -31,15 +31,23 @@ const BookingModal = ({ isOpen, onClose }) => {
     const [lastRefresh, setLastRefresh] = useState(null);
     const refreshIntervalRef = useRef(null);
   
-    useEffect(() => {
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get("token");
-      if (token) {
-          setFriendToken(token);
-          setCustomMode(true); 
-          window.history.replaceState({}, document.title, "/"); 
-      }
-    }, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+        sessionStorage.setItem("carbon_friend_token", token);
+        setFriendToken(token);
+        setCustomMode(true); 
+        window.history.replaceState({}, document.title, "/"); 
+        return;
+    }
+
+    const storedToken = sessionStorage.getItem("carbon_friend_token");
+    if (storedToken) {
+        setFriendToken(storedToken);
+        setCustomMode(true);
+    }
+  }, []);
 
   const getWeekDates = (offset, includeWeekends = false) => {
     const dates = [];
