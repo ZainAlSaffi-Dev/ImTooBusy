@@ -41,14 +41,19 @@ const BookingModal = ({ isOpen, onClose }) => {
       }
     }, []);
 
-  const getWeekDates = (offset) => {
+  const getWeekDates = (offset, includeWeekends = false) => {
     const dates = [];
     let currentDate = new Date();
-    currentDate.setDate(currentDate.getDate() + (offset * 7));
 
-    while (dates.length < 5) {
+    // VIP users page by 5 days so weekends appear while keeping 5 columns
+    const pageSize = 5;
+    const stepDays = includeWeekends ? pageSize : 7;
+    currentDate.setDate(currentDate.getDate() + (offset * stepDays));
+
+    while (dates.length < pageSize) {
         const day = currentDate.getDay();
-        if (day !== 0 && day !== 6) {
+        // Include all days for VIP, or only weekdays for regular users
+        if (includeWeekends || (day !== 0 && day !== 6)) {
             dates.push(new Date(currentDate));
         }
         currentDate.setDate(currentDate.getDate() + 1);
@@ -56,7 +61,8 @@ const BookingModal = ({ isOpen, onClose }) => {
     return dates;
   };
 
-  const currentWeekDates = getWeekDates(weekOffset);
+  // VIP users (with friendToken) can see weekends
+  const currentWeekDates = getWeekDates(weekOffset, !!friendToken);
 
   const getMonthTitle = () => {
       if (currentWeekDates.length === 0) return "";
