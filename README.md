@@ -2,7 +2,7 @@
 
 My personal portfolio website. I got so busy juggling uni, work, and side projects that I couldn't keep track of when I was free to hang out with friends or schedule meetings — so I built a website where people can just book time with me and I can send them the link instead of going back and forth.
 
-**Live site:** [zainalsaffi.com](zainalsaffi.com)
+**Live site:** www.zainalsaffi.com
 
 ---
 
