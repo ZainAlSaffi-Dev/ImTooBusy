@@ -1,8 +1,8 @@
 # ImTooBusy — Portfolio of Zain Al-Saffi
 
-My personal portfolio website, built to showcase my experience, projects, and provide a way for people to book time on my calendar — because I'm too busy to coordinate manually.
+My personal portfolio website. I got so busy juggling uni, work, and side projects that I couldn't keep track of when I was free to hang out with friends or schedule meetings — so I built a website where people can just book time with me and I can send them the link instead of going back and forth.
 
-**Live site:** [imtoobusy.dev](https://imtoobusy.dev) *(or wherever you're hosting it)*
+**Live site:** [imtoobusy.dev](zainalsaffi.com)
 
 ---
 
@@ -75,29 +75,6 @@ ImTooBusy/
 └── testing/                  # Test scripts
 ```
 
----
-
-## Getting Started
-
-### Frontend
-
-```bash
-cd carbon-calendar
-npm install
-npm run dev
-```
-
-### Backend
-
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
-
-> **Note:** The backend requires a `.env` file with Google Calendar credentials, Discord bot token, and other secrets. See the backend directory for details.
-
----
 
 ## License
 
