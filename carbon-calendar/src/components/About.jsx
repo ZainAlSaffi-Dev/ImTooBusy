@@ -24,7 +24,7 @@ const aboutSections = [
   {
     id: 2,
     title: "The Work",
-    subtitle: "Quant // Algorithms // Building Stuff",
+    subtitle: "Quant // Algorithms // Deep Learning",
     icon: <Cpu size={24} />,
     text: (
       <>
@@ -32,7 +32,7 @@ const aboutSections = [
           Most of my technical brain power goes into <span className="text-white font-bold">Algorithmic Trading</span>. I'm heading to <span className="text-carbon-primary font-bold">Optiver</span> soon as a Quantitative Researcher, which is honestly a dream come true.
         </p>
         <p>
-          I love the rush of trading competitions—building bots, crunching math, and trying to outsmart the market with Python. Whether it's optimization or deep learning, if it’s difficult and involves data, I’m probably into it.
+          I love the rush of trading competitions! Wether its building trading bots, deriving math or trying to outsmart the market with Python, if it’s difficult and involves data, I’m probably into it. I also love research in general, particularly in ML and Deep Learning. 
         </p>
       </>
     ),
@@ -47,7 +47,7 @@ const aboutSections = [
     text: (
       <>
         <p>
-          When I'm not staring at a terminal, I'm usually making noise. I play <span className="text-white font-bold">7-string guitar</span> (mostly metal—think Slipknot or In Flames) and love messing around with low tunings and composition. My current gear stack is an Ibanez Prestige RGR752AHB into a Neural DSP Archetype Gojira.  
+          When I'm not staring at a terminal, I'm usually making noise. I play <span className="text-white font-bold">7-string guitar</span> (mostly metal, my favourites being BabyMetal, In Flames and Electric Callboy) and love messing around with low tunings and composition. My current gear stack is an Ibanez Prestige RGR752AHB into a Neural DSP Archetype Gojira.  
         </p>
         <p>
           I'm also pretty deep into <span className="text-carbon-primary font-bold">niche fragrances</span>. There is a surprising amount of chemistry and art in layering scents, and I just think it's a cool world to explore. My current rotation is LV Imagination, Creed Aventus, Afternoon Swim and Pacific Chill for the summer. PDM Althair, Initio Oud for Greatness and PDM Oajan for the winter.
@@ -65,10 +65,10 @@ const aboutSections = [
     text: (
       <>
         <p>
-          Long term? I want to build things that actually matter. My moonshot goal is to start a <span className="text-white font-bold">Neurobionics firm</span> to help reverse neurological diseases like Alzheimer's.
+          Long term? I want to build things that actually matter. My end goal is to start a <span className="text-white font-bold">Neurobionics firm</span> to help reverse neurological diseases like Alzheimer's.
         </p>
         <p>
-          I also have a fire in me for <span className="text-carbon-primary font-bold">Pro Bono Law</span>. I’m deeply driven by the idea of standing up for people who can't defend themselves—using logic and argument to be a shield for the vulnerable.
+          I also have a fire in me for <span className="text-carbon-primary font-bold">Pro Bono Law</span>. I’m deeply driven by the idea of standing up for people who can't defend themselves and love the thrill and adernaline of fighting for what is right.
         </p>
       </>
     ),
