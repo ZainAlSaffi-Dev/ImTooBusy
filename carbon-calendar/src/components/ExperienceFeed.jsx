@@ -65,7 +65,9 @@ const workHistory = [
         company: "SVPartners",
         date: "Feb 2026 - May 2026",
         logo: "/logos/svpartners.png", 
-        description: "Incoming Winter Insolvency Intern at SVPartners.",
+        description: ["Facilitated the litigation lifecycle and asset realisation for complex insolvency estates, including the drafting of Concerns Notices, statutory demands, and pre-litigation correspondence to initiate debt recovery proceedings.",
+            "Applied the provisions of the Corporations Act 2001 to ensure statutory compliance, preparing legal workpapers and forensic financial analyses to identify voidable transactions and support formal recovery claims." 
+        ],
         tech: ["Insolvency", "Finance", "Law"]
     },
     {
