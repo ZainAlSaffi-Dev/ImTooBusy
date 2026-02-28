@@ -65,8 +65,10 @@ const workHistory = [
         company: "SVPartners",
         date: "Feb 2026 - May 2026",
         logo: "/logos/svpartners.png", 
-        description: ["Facilitated the litigation lifecycle and asset realisation for complex insolvency estates, including the drafting of Concerns Notices, statutory demands, and pre-litigation correspondence to initiate debt recovery proceedings.",
-            "Applied the provisions of the Corporations Act 2001 to ensure statutory compliance, preparing legal workpapers and forensic financial analyses to identify voidable transactions and support formal recovery claims." 
+        description: [
+            "Utilizing the IRAC framework to synthesize provisions from the Bankruptcy Act 1966 and Corporations Act 2001, facilitating the adjudication of creditor claims and ensuring compliance with evidentiary requirements for statutory filings.",
+
+            "Conducted legal research into insolvency case law and ex parte procedural requirements to evaluate the validity of corporate documentation and manage the accurate administration of insolvent estates within the Insolv platform." 
         ],
         tech: ["Insolvency", "Finance", "Law"]
     },
