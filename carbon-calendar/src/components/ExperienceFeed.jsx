@@ -63,7 +63,7 @@ const workHistory = [
         id: 'svp-intern',
         role: "Law & Insolvency Intern",
         company: "SVPartners",
-        date: "Feb 2026 - May 2026",
+        date: "Feb 2026 - Mar 2026",
         logo: "/logos/svpartners.png", 
         description: [
             "Utilizing the IRAC framework to synthesize provisions from the Bankruptcy Act 1966 and Corporations Act 2001, facilitating the adjudication of creditor claims and ensuring compliance with evidentiary requirements for statutory filings.",
