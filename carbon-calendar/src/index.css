@@ -2,9 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Editorial / Linear-inspired warm-dark base ─────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap');
+
 :root {
-  background-color: #111111; /* carbon-bg */
-  color: #E0E0E0; /* carbon-text */
+  --bg:       #0E0D0C;
+  --surface:  #1A1816;
+  --border:   #2A2724;
+  --text:     #EDE6D7;
+  --muted:    #9A9285;
+  --accent:   #C9A36C;
 }
 
 html, body {
@@ -12,6 +20,18 @@ html, body {
   max-width: 100%;
   overflow-x: hidden;
   overscroll-behavior-x: none;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv11";
 }
 
 #root {
@@ -20,23 +40,76 @@ html, body {
   overflow-x: hidden;
 }
 
-body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  -webkit-font-smoothing: antialiased;
+/* Subtle grain overlay — gives the background a tactile, non-digital feel */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
 }
 
-/* Custom Scrollbar to match the theme */
+/* Selection */
+::selection {
+  background: rgba(201, 163, 108, 0.25);
+  color: #fff;
+}
+
+/* Scrollbar — quiet, warm */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #111111; 
+  background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #333; 
-  border-radius: 4px;
+  background: #2A2724;
+  border-radius: 8px;
+  border: 2px solid var(--bg);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00FFFF; /* Neon Cyan on hover */
+  background: #3A352F;
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3A352F;
+  border-radius: 6px;
+  border: none;
+}
+
+/* Underline animation used for inline links */
+.link {
+  position: relative;
+  display: inline-block;
+  color: var(--text);
+  text-decoration: none;
+  padding-bottom: 1px;
+  border-bottom: 1px solid rgba(201, 163, 108, 0.4);
+  transition: border-color 200ms ease, color 200ms ease;
+}
+.link:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Tiny eyebrow label used above section blocks */
+.eyebrow {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Reduce motion safely */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

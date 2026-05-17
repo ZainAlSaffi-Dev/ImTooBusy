@@ -1,0 +1,3166 @@
+From c8fe9eda31a9b69da44c3769425f2e7aa6d75e3b Mon Sep 17 00:00:00 2001
+From: Zain Al-Saffi <zain.alsaffi@eucalyptus.vc>
+Date: Sun, 17 May 2026 18:43:26 +1000
+Subject: [PATCH] Redesign portfolio: warm-dark editorial theme, refresh
+ credentials
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Full visual refactor moving away from the cyberpunk/HUD aesthetic that
+read as AI-portfolio template. New direction is Linear-inspired warm
+dark mode with editorial typography (Instrument Serif + Inter + JetBrains
+Mono), a single muted amber accent, and generous spacing.
+
+Theme + typography
+- New ink-* palette in tailwind.config (warm near-black bg, off-white text)
+- Kept carbon-* aliases pointing at the new palette so admin pages keep
+  working without churn
+- Instrument Serif for display/italics, Inter for body, JetBrains Mono
+  for eyebrows/dates; subtle grain overlay on body
+
+Pages
+- Hero: editorial intro (name in mixed serif/sans, one tight tagline,
+  "currently" facts row). Dropped the typing animation, "SYSTEM ONLINE"
+  framing, neon aura, and "scroll for logs"
+- About: removed the Terminal Gate barrier entirely. Replaced the four
+  "WHO_AM_I?" sections with a short prose paragraph + a quiet
+  "Currently" list. Personality lightly woven in
+- Experience: rebuilt as an editorial list (date column / content
+  column, hairline dividers) instead of a glowing timeline with dots.
+  Updated with all latest credentials from the new resume — Optiver
+  incoming, Eucalyptus AI Growth, UQ Research Assistant (Meta Content
+  Library NLP), COMP3710 tutoring, SVPartners, Thiess, UQ Racing,
+  UQCS President 2026
+- Projects: clean tabular layout. IMC Prosperity 3 (9th AU / 60th
+  global), BlackBoxLabs (98.98% acc, 1000+ DL), ValoStats, AlgoJam,
+  SkinDetect with updated numbers
+- Contact: replaced the single LinkedIn card with a row-list of email
+  + LinkedIn + GitHub
+- Navbar: simplified to four anchor links + a single CTA
+
+Booking modal
+- All API contracts (/api/availability, /api/request-meeting), week-grid
+  logic, timezone handling, VIP token, auto-refresh, and three-step flow
+  preserved verbatim
+- Restyled to match the new warm-dark theme
+
+Cleanup
+- TerminalGate.jsx neutralised to a no-op stub
+- index.html title + meta refreshed
+- App.css emptied; all global styles live in index.css
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+---
+ carbon-calendar/index.html                    |   8 +-
+ carbon-calendar/src/App.css                   |  43 +-
+ carbon-calendar/src/App.jsx                   | 139 ++--
+ carbon-calendar/src/components/About.jsx      | 232 ++----
+ .../src/components/BookingModal.jsx           | 729 +++++++++---------
+ carbon-calendar/src/components/Contact.jsx    | 137 ++--
+ .../src/components/ExperienceFeed.jsx         | 612 +++++----------
+ carbon-calendar/src/components/Hero.jsx       | 133 ++--
+ carbon-calendar/src/components/Navbar.jsx     | 124 ++-
+ carbon-calendar/src/components/Projects.jsx   | 289 +++----
+ .../src/components/TerminalGate.jsx           | 113 +--
+ carbon-calendar/src/index.css                 |  99 ++-
+ carbon-calendar/tailwind.config.js            |  61 +-
+ 13 files changed, 1150 insertions(+), 1569 deletions(-)
+
+diff --git a/carbon-calendar/index.html b/carbon-calendar/index.html
+index 3e0a3cb..9f9cd80 100644
+--- a/carbon-calendar/index.html
++++ b/carbon-calendar/index.html
+@@ -4,11 +4,15 @@
+     <meta charset="UTF-8" />
+     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-    <title>Zain Al-Saffi</title>
+-    <meta name="description" content="Zain Al-Saffi - Personal Portfolio & Calendar" />
++    <title>Zain Al-Saffi — Quant & Software Engineer</title>
++    <meta name="description" content="Engineering & software student at UQ. Incoming Quantitative Researcher at Optiver. Currently growth-engineering at Eucalyptus." />
++    <meta name="theme-color" content="#0E0D0C" />
+     <meta property="og:title" content="Zain Al-Saffi" />
++    <meta property="og:description" content="Quant & software engineer building systems that think in markets and data." />
+     <meta property="og:site_name" content="Zain Al-Saffi" />
+     <meta property="og:type" content="website" />
++    <link rel="preconnect" href="https://fonts.googleapis.com" />
++    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+   </head>
+   <body>
+     <div id="root"></div>
+diff --git a/carbon-calendar/src/App.css b/carbon-calendar/src/App.css
+index b9d355d..a9cabea 100644
+--- a/carbon-calendar/src/App.css
++++ b/carbon-calendar/src/App.css
+@@ -1,42 +1 @@
+-#root {
+-  max-width: 1280px;
+-  margin: 0 auto;
+-  padding: 2rem;
+-  text-align: center;
+-}
+-
+-.logo {
+-  height: 6em;
+-  padding: 1.5em;
+-  will-change: filter;
+-  transition: filter 300ms;
+-}
+-.logo:hover {
+-  filter: drop-shadow(0 0 2em #646cffaa);
+-}
+-.logo.react:hover {
+-  filter: drop-shadow(0 0 2em #61dafbaa);
+-}
+-
+-@keyframes logo-spin {
+-  from {
+-    transform: rotate(0deg);
+-  }
+-  to {
+-    transform: rotate(360deg);
+-  }
+-}
+-
+-@media (prefers-reduced-motion: no-preference) {
+-  a:nth-of-type(2) .logo {
+-    animation: logo-spin infinite 20s linear;
+-  }
+-}
+-
+-.card {
+-  padding: 2em;
+-}
+-
+-.read-the-docs {
+-  color: #888;
+-}
++/* Intentionally empty — global styles live in index.css */
+diff --git a/carbon-calendar/src/App.jsx b/carbon-calendar/src/App.jsx
+index 67dd7d4..b42f7e6 100644
+--- a/carbon-calendar/src/App.jsx
++++ b/carbon-calendar/src/App.jsx
+@@ -1,144 +1,111 @@
+ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+-import { useState, useEffect } from 'react'; // <--- Added useEffect
++import { useState, useEffect } from 'react';
+ import Navbar from './components/Navbar';
+ import Hero from './components/Hero';
+ import ExperienceFeed from './components/ExperienceFeed';
+ import BookingModal from './components/BookingModal';
+ import AdminDashboard from './components/AdminDashboard';
+-import AdminLogin from './components/AdminLogin'; 
+-import TerminalGate from './components/TerminalGate';
+-import Projects from './components/Projects'; 
+-import About from './components/About';      
++import AdminLogin from './components/AdminLogin';
++import Projects from './components/Projects';
++import About from './components/About';
+ import Contact from './components/Contact';
+ 
+-// Simple Footer Component
++// ── Footer ────────────────────────────────────────────────────────────────
+ const Footer = () => (
+-  <footer className="py-8 border-t border-white/10 bg-black text-center text-gray-600 font-mono text-sm">
+-    <p>CARBON SYSTEM // ZAIN_AL_SAFFI © 2026</p>
+-    <p className="text-xs mt-2">Running on Railway // Built with React</p>
++  <footer className="border-t border-ink-300/60 mt-24">
++    <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-sm">
++      <p className="text-ink-600 font-mono text-xs tracking-wider">
++        © {new Date().getFullYear()} ZAIN AL-SAFFI · BRISBANE, QLD
++      </p>
++      <p className="text-ink-600 font-mono text-xs tracking-wider">
++        DESIGNED &amp; BUILT BY HAND · v2
++      </p>
++    </div>
+   </footer>
+ );
+ 
+-// --- THE MAIN PORTFOLIO PAGE ---
++// ── Main portfolio page ───────────────────────────────────────────────────
+ const PortfolioPage = () => {
+   const [isModalOpen, setIsModalOpen] = useState(false);
+-  const [isAboutUnlocked, setIsAboutUnlocked] = useState(false); 
+ 
+-  // --- NEW LOGIC: FORCE SCROLL TO TOP ON REFRESH ---
+   useEffect(() => {
+-    // 1. Tell the browser NOT to restore the scroll position automatically
+     if ('scrollRestoration' in window.history) {
+       window.history.scrollRestoration = 'manual';
+     }
+-
+-    // 2. Force the window to the very top immediately
+     window.scrollTo(0, 0);
+-
+-    // Optional: Clean up by restoring default behavior when leaving (not strictly necessary for this app)
+-    return () => {
+-      if ('scrollRestoration' in window.history) {
+-        window.history.scrollRestoration = 'auto';
+-      }
+-    };
+   }, []);
+ 
+   return (
+-    <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 selection:text-purple-200 overflow-x-hidden">
+-      
++    <div className="min-h-screen bg-ink-0 text-ink-900 relative">
+       <Navbar onOpenBooking={() => setIsModalOpen(true)} />
+-      
+-      <main className="relative">
+-        
+-        {/* 1. HERO */}
+-        <div id="home">
+-          <Hero />
+-        </div>
+ 
+-        {/* 2. THE TERMINAL GATE */}
+-        <div className="relative z-30 bg-black">
+-           <TerminalGate onUnlock={() => setIsAboutUnlocked(true)} />
+-        </div>
++      <main className="relative z-10">
++        <section id="home">
++          <Hero onOpenBooking={() => setIsModalOpen(true)} />
++        </section>
+ 
+-        {/* 3. ABOUT SECTION */}
+-        <div id="about" className="relative z-20 bg-[#050505]">
+-           <About isUnlocked={isAboutUnlocked} />
+-        </div>
++        <section id="work">
++          <ExperienceFeed />
++        </section>
+ 
+-        {/* 4. EXPERIENCE FEED */}
+-        <div id="experience" className="relative z-10 bg-black">
+-           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-12" />
+-           <ExperienceFeed />
+-        </div>
++        <section id="projects">
++          <Projects />
++        </section>
+ 
+-        {/* 5. PROJECTS */}
+-        <div id="projects" className="relative z-10 bg-[#080808]">
+-            <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
+-            <Projects />
+-        </div>
+-
+-        {/* 6. CONTACT */}
+-        <div id="contact" className="relative z-10 bg-black">
+-            <div className="h-px w-full bg-gradient-to-r from-transparent via-[#0A66C2]/30 to-transparent" />
+-            <Contact />
+-        </div>
++        <section id="about">
++          <About />
++        </section>
+ 
++        <section id="contact">
++          <Contact onOpenBooking={() => setIsModalOpen(true)} />
++        </section>
+       </main>
+ 
+       <Footer />
+ 
+-      <BookingModal 
+-        isOpen={isModalOpen} 
+-        onClose={() => setIsModalOpen(false)} 
++      <BookingModal
++        isOpen={isModalOpen}
++        onClose={() => setIsModalOpen(false)}
+       />
+     </div>
+   );
+ };
+ 
+-// --- MAIN APP ROUTER ---
++// ── App router ────────────────────────────────────────────────────────────
+ function App() {
+-  // Initialize state from localStorage so you stay logged in on refresh
+-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
+-      return localStorage.getItem("carbon_admin_auth") === "true";
+-  });
++  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() =>
++    localStorage.getItem("carbon_admin_auth") === "true"
++  );
+ 
+-  // Handler to set login state AND save it
+   const handleLogin = (status) => {
+-      setIsAdminLoggedIn(status);
+-      if (status) {
+-          localStorage.setItem("carbon_admin_auth", "true");
+-      } else {
+-          localStorage.removeItem("carbon_admin_auth");
+-      }
++    setIsAdminLoggedIn(status);
++    if (status) localStorage.setItem("carbon_admin_auth", "true");
++    else        localStorage.removeItem("carbon_admin_auth");
+   };
+ 
+   return (
+     <Router>
+       <Routes>
+-        {/* Public Route: The Portfolio */}
+         <Route path="/" element={<PortfolioPage />} />
+-        
+-        {/* Login Route: Redirect to /admin if already logged in */}
+-        <Route 
+-          path="/login" 
++        <Route
++          path="/login"
+           element={
+-            isAdminLoggedIn 
+-              ? <Navigate to="/admin" replace /> 
++            isAdminLoggedIn
++              ? <Navigate to="/admin" replace />
+               : <AdminLogin onLogin={() => handleLogin(true)} />
+-          } 
++          }
+         />
+-        
+-        {/* Admin Route: Protected */}
+-        <Route 
+-          path="/admin" 
++        <Route
++          path="/admin"
+           element={
+-            isAdminLoggedIn 
+-              ? <AdminDashboard /> 
++            isAdminLoggedIn
++              ? <AdminDashboard />
+               : <Navigate to="/login" replace />
+-          } 
++          }
+         />
+       </Routes>
+     </Router>
+   );
+ }
+ 
+-export default App;
+\ No newline at end of file
++export default App;
+diff --git a/carbon-calendar/src/components/About.jsx b/carbon-calendar/src/components/About.jsx
+index f473e29..50bb3ee 100644
+--- a/carbon-calendar/src/components/About.jsx
++++ b/carbon-calendar/src/components/About.jsx
+@@ -1,193 +1,65 @@
+-import { motion } from 'framer-motion';
+-import { Terminal, Cpu, Music, Scale } from 'lucide-react';
++// Quiet, editorial about — no terminal gate, no "WHO_AM_I?".
++// Two columns: a short prose paragraph + a sparse "currently" list.
+ 
+-const aboutSections = [
+-  {
+-    id: 1,
+-    title: "The Identity",
+-    subtitle: "Student // Leader // Problem Solver",
+-    icon: <Terminal size={24} />,
+-    text: (
+-      <>
+-        <p>
+-          Hey! My name is Zain and I'm an Engineering student at the <span className="text-white font-bold">University of Queensland</span>, specializing in all things software.
+-        </p>
+-        <p>
+-          I currently serve as the <span className="text-carbon-primary font-bold">President of the UQ Computing Society</span> and bounce around a few other roles on campus. I love solving interesting problems and pushing myself to the limit—then breaking that limit to see what happens next.
+-        </p>
+-      </>
+-    ),
+-    // Fixed path: /public/logos/ -> /logos/
+-    image: "/logos/Ball.JPG",
+-    tags: ["Leadership", "Community", "Growth"]
+-  },
+-  {
+-    id: 2,
+-    title: "The Work",
+-    subtitle: "Quant // Algorithms // Building Stuff",
+-    icon: <Cpu size={24} />,
+-    text: (
+-      <>
+-        <p>
+-          Most of my technical brain power goes into <span className="text-white font-bold">Algorithmic Trading</span>. I'm heading to <span className="text-carbon-primary font-bold">Optiver</span> soon as a Quantitative Researcher, which is honestly a dream come true.
+-        </p>
+-        <p>
+-          I love the rush of trading competitions—building bots, crunching math, and trying to outsmart the market with Python. Whether it's optimization or deep learning, if it’s difficult and involves data, I’m probably into it.
+-        </p>
+-      </>
+-    ),
+-    image: "/logos/prosperity.JPG",
+-    tags: ["Python", "Math", "Trading"]
+-  },
+-  {
+-    id: 3,
+-    title: "The Hobbies",
+-    subtitle: "Metal // Sound // Scents",
+-    icon: <Music size={24} />,
+-    text: (
+-      <>
+-        <p>
+-          When I'm not staring at a terminal, I'm usually making noise. I play <span className="text-white font-bold">7-string guitar</span> (mostly metal—think Slipknot or In Flames) and love messing around with low tunings and composition. My current gear stack is an Ibanez Prestige RGR752AHB into a Neural DSP Archetype Gojira.  
+-        </p>
+-        <p>
+-          I'm also pretty deep into <span className="text-carbon-primary font-bold">niche fragrances</span>. There is a surprising amount of chemistry and art in layering scents, and I just think it's a cool world to explore. My current rotation is LV Imagination, Creed Aventus, Afternoon Swim and Pacific Chill for the summer. PDM Althair, Initio Oud for Greatness and PDM Oajan for the winter.
+-        </p>
+-      </>
+-    ),
+-    image: "/logos/guitar.jpeg",
+-    tags: ["Guitar", "Metal", "Fragrances"]
+-  },
+-  {
+-    id: 4,
+-    title: "The Future",
+-    subtitle: "Neurobionics // Justice // Future",
+-    icon: <Scale size={24} />,
+-    text: (
+-      <>
+-        <p>
+-          Long term? I want to build things that actually matter. My moonshot goal is to start a <span className="text-white font-bold">Neurobionics firm</span> to help reverse neurological diseases like Alzheimer's.
+-        </p>
+-        <p>
+-          I also have a fire in me for <span className="text-carbon-primary font-bold">Pro Bono Law</span>. I’m deeply driven by the idea of standing up for people who can't defend themselves—using logic and argument to be a shield for the vulnerable.
+-        </p>
+-      </>
+-    ),
+-    image: "/logos/sydney.JPG",
+-    tags: ["Bio-Tech", "Justice"]
+-  }
++const CURRENTLY = [
++  { k: 'Working on',  v: 'GLP-1 narrative monitoring at Eucalyptus' },
++  { k: 'Researching', v: 'Algorithmic governance & engagement on Meta platforms' },
++  { k: 'Teaching',    v: 'COMP3710 — Pattern Recognition (UQ)' },
++  { k: 'Reading',     v: '“Advances in Financial Machine Learning” — López de Prado' },
++  { k: 'Listening',   v: 'Slipknot · In Flames · low-tuned 7-string things' },
+ ];
+ 
+-const About = ({ isUnlocked }) => {
++const About = () => {
+   return (
+-    <motion.section 
+-        id="about" 
+-        // Logic: Start hidden (height: 0), then expand when unlocked
+-        initial={{ opacity: 0, y: 100, height: 0, overflow: 'hidden' }}
+-        animate={isUnlocked ? { opacity: 1, y: 0, height: 'auto', overflow: 'visible' } : {}}
+-        transition={{ duration: 1, ease: "easeOut" }}
+-        className="py-12 md:py-24 px-4 md:px-6 max-w-7xl mx-auto"
+-    >
+-      
+-      {/* Section Header */}
+-      <div className="mb-10 md:mb-20 text-center">
+-        <motion.h2 
+-          className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight"
+-        >
+-          WHO_AM_I<span className="text-carbon-primary">?</span>
+-        </motion.h2>
+-        <motion.div 
+-          initial={{ w: 0 }}
+-          whileInView={{ w: 100 }}
+-          viewport={{ once: true }}
+-          className="h-1 w-24 bg-carbon-primary mx-auto rounded-full"
+-        />
+-      </div>
++    <div className="px-6 py-28 md:py-36">
++      <div className="max-w-5xl mx-auto">
+ 
+-      <div className="space-y-16 md:space-y-32">
+-        {aboutSections.map((section, index) => {
+-          const isEven = index % 2 === 0;
+-          
+-          return (
+-            <motion.div 
+-              key={section.id}
+-              // Only animate items in when the parent is unlocked
+-              initial={{ opacity: 0, y: 50 }}
+-              whileInView={isUnlocked ? { opacity: 1, y: 0 } : {}}
+-              transition={{ duration: 0.6, delay: 0.1 }}
+-              viewport={{ once: true, margin: "-100px" }}
+-              className={`flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 md:gap-24 items-center group`}
+-            >
+-              
+-              {/* IMAGE SIDE */}
+-              <div className="w-full md:w-1/2 relative">
+-                {/* The Purple Underglow */}
+-                <div className="absolute -inset-4 bg-purple-600/20 blur-2xl rounded-full opacity-75 group-hover:opacity-100 group-hover:bg-purple-600/30 transition-all duration-700 pointer-events-none" />
+-                
+-                <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-carbon-bg">
+-                  {/* Mobile: Square aspect ratio with object-contain to show full image */}
+-                  {/* Desktop: 4/3 aspect ratio with object-cover for full bleed */}
+-                  <div className="aspect-square md:aspect-[4/3] relative bg-carbon-bg">
+-                    {/* Placeholder Text */}
+-                    <div className="absolute inset-0 flex items-center justify-center text-gray-800 font-mono text-xs z-0">
+-                        IMG: {section.title}
+-                    </div>
+-                    
+-                    <img 
+-                      src={section.image} 
+-                      alt={section.title} 
+-                      className="w-full h-full object-contain md:object-cover grayscale brightness-90 contrast-125 group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-105 transition-all duration-700 ease-in-out relative z-10"
+-                      onError={(e) => {
+-                          // Fallback to avoid broken image icon
+-                          e.target.style.display = 'none';
+-                          e.target.parentElement.classList.add('bg-gray-900');
+-                      }}
+-                    />
+-                    
+-                    {/* Overlay Gradient */}
+-                    <div className="absolute inset-0 bg-purple-900/10 mix-blend-overlay z-20 pointer-events-none" />
+-                  </div>
+-                </div>
+-              </div>
++        <div className="grid md:grid-cols-12 gap-12 md:gap-16">
+ 
+-              {/* TEXT SIDE */}
+-              <div className="w-full md:w-1/2 space-y-4 md:space-y-6 text-center md:text-left">
+-                <div className={`flex flex-col ${isEven ? 'md:items-start' : 'md:items-end'}`}>
+-                  
+-                  <div className="flex items-center justify-center md:justify-start gap-2 text-carbon-primary font-mono text-xs md:text-sm tracking-widest mb-2 uppercase">
+-                    {section.icon}
+-                    <span>0{index + 1} // {section.title}</span>
+-                  </div>
+-                  
+-                  <h3 className="text-2xl md:text-4xl font-bold text-white mb-2">
+-                    {section.subtitle}
+-                  </h3>
+-                  
+-                  <div className="h-1 w-16 md:w-20 bg-white/10 rounded-full mb-4 md:mb-6 mx-auto md:mx-0" />
+-                </div>
++          {/* Left — the prose */}
++          <div className="md:col-span-7">
++            <span className="eyebrow">About</span>
++            <h2 className="mt-3 text-3xl md:text-4xl font-serif italic font-normal text-ink-900 leading-tight tracking-tightish">
++              Beyond the resume.
++            </h2>
+ 
+-                <div className={`text-gray-400 leading-relaxed text-base md:text-lg space-y-3 md:space-y-4 ${isEven ? 'md:text-left' : 'md:text-right'}`}>
+-                  {section.text}
+-                </div>
++            <div className="mt-8 space-y-5 text-ink-800 text-lg leading-relaxed max-w-reading">
++              <p>
++                I grew up wanting to understand how things actually work — markets, models, machines.
++                Most of what I do now is somewhere in that intersection: trading strategies, ML pipelines,
++                autonomous systems, the occasional NLP project that tells a research team something
++                they didn't already know.
++              </p>
++              <p>
++                Outside the terminal I play 7-string guitar (Ibanez Prestige into a Neural DSP Gojira),
++                spend more time than is probably reasonable on niche fragrances, and have a soft spot for
++                pro bono law — the long-term plan involves bionics and Alzheimer's, but that's another
++                conversation.
++              </p>
++            </div>
++          </div>
+ 
+-                {/* Tags */}
+-                <div className={`flex flex-wrap gap-2 pt-2 md:pt-4 ${isEven ? 'justify-center md:justify-start' : 'justify-center md:justify-end'}`}>
+-                  {section.tags.map(tag => (
+-                    <span 
+-                      key={tag} 
+-                      className="px-2 md:px-3 py-1 text-xs font-mono text-purple-300 bg-purple-500/10 border border-purple-500/20 rounded-full"
+-                    >
+-                      #{tag}
+-                    </span>
+-                  ))}
+-                </div>
+-              </div>
++          {/* Right — "currently" list */}
++          <div className="md:col-span-5">
++            <span className="eyebrow">Currently</span>
++            <ul className="mt-4 divide-y divide-ink-300/60 border-t border-b border-ink-300/60">
++              {CURRENTLY.map((row) => (
++                <li key={row.k} className="py-4 flex flex-col gap-1">
++                  <span className="font-mono text-[11px] uppercase tracking-widest text-ink-600">
++                    {row.k}
++                  </span>
++                  <span className="text-ink-900 text-base">
++                    {row.v}
++                  </span>
++                </li>
++              ))}
++            </ul>
++          </div>
+ 
+-            </motion.div>
+-          );
+-        })}
++        </div>
+       </div>
+-    </motion.section>
++    </div>
+   );
+ };
+ 
+-export default About;
+\ No newline at end of file
++export default About;
+diff --git a/carbon-calendar/src/components/BookingModal.jsx b/carbon-calendar/src/components/BookingModal.jsx
+index 657f6c5..c1d9458 100644
+--- a/carbon-calendar/src/components/BookingModal.jsx
++++ b/carbon-calendar/src/components/BookingModal.jsx
+@@ -1,460 +1,491 @@
+-import { X, Calendar, Clock, ArrowRight, ArrowLeft, CheckCircle, Globe, AlertTriangle, RefreshCcw, Zap } from 'lucide-react';
++import { X, Calendar, Clock, ArrowLeft, CheckCircle, Globe, AlertTriangle, RefreshCcw, Zap } from 'lucide-react';
+ import { useState, useEffect, useRef, useCallback } from 'react';
+-import { API_BASE_URL } from '../config'; 
++import { API_BASE_URL } from '../config';
+ 
+ const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
+ 
+ const BookingModal = ({ isOpen, onClose }) => {
+-    if (!isOpen) return null;
+-  
+-    // STATE
+-    const [step, setStep] = useState(1);
+-    const [duration, setDuration] = useState(30);
+-    const [weekOffset, setWeekOffset] = useState(0); 
+-    const [availability, setAvailability] = useState({});
+-    const [loading, setLoading] = useState(false);
+-    const [submitting, setSubmitting] = useState(false);
+-    const [friendToken, setFriendToken] = useState(null);
+-  
+-    // SELECTION STATE
+-    const [selectedSlotISO, setSelectedSlotISO] = useState(null); 
+-    const [displayDate, setDisplayDate] = useState(""); 
+-    const [displayTime, setDisplayTime] = useState(""); 
+-    
+-    // MODE
+-    const [customMode, setCustomMode] = useState(false);
+-    const [formData, setFormData] = useState({ name: '', email: '', topic: '' });
+-    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+-
+-    // AUTO-REFRESH STATE
+-    const [isRefreshing, setIsRefreshing] = useState(false);
+-    const [lastRefresh, setLastRefresh] = useState(null);
+-    const refreshIntervalRef = useRef(null);
+-  
++  if (!isOpen) return null;
++
++  // STATE
++  const [step, setStep] = useState(1);
++  const [duration, setDuration] = useState(30);
++  const [weekOffset, setWeekOffset] = useState(0);
++  const [availability, setAvailability] = useState({});
++  const [loading, setLoading] = useState(false);
++  const [submitting, setSubmitting] = useState(false);
++  const [friendToken, setFriendToken] = useState(null);
++
++  // SELECTION STATE
++  const [selectedSlotISO, setSelectedSlotISO] = useState(null);
++  const [displayDate, setDisplayDate] = useState("");
++  const [displayTime, setDisplayTime] = useState("");
++
++  // MODE
++  const [customMode, setCustomMode] = useState(false);
++  const [formData, setFormData] = useState({ name: '', email: '', topic: '' });
++  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
++
++  // AUTO-REFRESH STATE
++  const [isRefreshing, setIsRefreshing] = useState(false);
++  const [lastRefresh, setLastRefresh] = useState(null);
++  const refreshIntervalRef = useRef(null);
++
+   useEffect(() => {
+     const params = new URLSearchParams(window.location.search);
+     const token = params.get("token");
+     if (token) {
+-        sessionStorage.setItem("carbon_friend_token", token);
+-        setFriendToken(token);
+-        setCustomMode(true); 
+-        window.history.replaceState({}, document.title, "/"); 
+-        return;
++      sessionStorage.setItem("carbon_friend_token", token);
++      setFriendToken(token);
++      setCustomMode(true);
++      window.history.replaceState({}, document.title, "/");
++      return;
+     }
+-
+     const storedToken = sessionStorage.getItem("carbon_friend_token");
+     if (storedToken) {
+-        setFriendToken(storedToken);
+-        setCustomMode(true);
++      setFriendToken(storedToken);
++      setCustomMode(true);
+     }
+   }, []);
+ 
+   const getWeekDates = (offset, includeWeekends = false) => {
+     const dates = [];
+     let currentDate = new Date();
+-
+-    // VIP users page by 5 days so weekends appear while keeping 5 columns
+     const pageSize = 5;
+     const stepDays = includeWeekends ? pageSize : 7;
+     currentDate.setDate(currentDate.getDate() + (offset * stepDays));
+-
+     while (dates.length < pageSize) {
+-        const day = currentDate.getDay();
+-        // Include all days for VIP, or only weekdays for regular users
+-        if (includeWeekends || (day !== 0 && day !== 6)) {
+-            dates.push(new Date(currentDate));
+-        }
+-        currentDate.setDate(currentDate.getDate() + 1);
++      const day = currentDate.getDay();
++      if (includeWeekends || (day !== 0 && day !== 6)) {
++        dates.push(new Date(currentDate));
++      }
++      currentDate.setDate(currentDate.getDate() + 1);
+     }
+     return dates;
+   };
+ 
+-  // VIP users (with friendToken) can see weekends
+   const currentWeekDates = getWeekDates(weekOffset, !!friendToken);
+ 
+   const getMonthTitle = () => {
+-      if (currentWeekDates.length === 0) return "";
+-      const first = currentWeekDates[0];
+-      const last = currentWeekDates[currentWeekDates.length - 1];
+-      const month1 = first.toLocaleDateString('default', { month: 'long' });
+-      const year1 = first.getFullYear();
+-      const month2 = last.toLocaleDateString('default', { month: 'long' });
+-      const year2 = last.getFullYear();
+-      if (month1 === month2) return `${month1} ${year1}`;
+-      return `${month1.substring(0,3)} - ${month2.substring(0,3)} ${year2}`;
++    if (currentWeekDates.length === 0) return "";
++    const first = currentWeekDates[0];
++    const last = currentWeekDates[currentWeekDates.length - 1];
++    const month1 = first.toLocaleDateString('default', { month: 'long' });
++    const year1 = first.getFullYear();
++    const month2 = last.toLocaleDateString('default', { month: 'long' });
++    const year2 = last.getFullYear();
++    if (month1 === month2) return `${month1} ${year1}`;
++    return `${month1.substring(0, 3)} – ${month2.substring(0, 3)} ${year2}`;
+   };
+ 
+   const isToday = (dateObj) => {
+-      const today = new Date();
+-      return dateObj.getDate() === today.getDate() &&
+-             dateObj.getMonth() === today.getMonth() &&
+-             dateObj.getFullYear() === today.getFullYear();
++    const today = new Date();
++    return dateObj.getDate() === today.getDate() &&
++           dateObj.getMonth() === today.getMonth() &&
++           dateObj.getFullYear() === today.getFullYear();
+   };
+ 
+-  // Fetch availability function (reusable for initial load and refresh)
++  // Fetch availability (reusable for initial load and refresh)
+   const fetchAvailability = useCallback(async (forceRefresh = false, silent = false) => {
+     if (currentWeekDates.length === 0) return;
+-    
+     const startStr = currentWeekDates[0].toISOString().split('T')[0];
+-    const endStr = currentWeekDates[currentWeekDates.length-1].toISOString().split('T')[0];
++    const endStr = currentWeekDates[currentWeekDates.length - 1].toISOString().split('T')[0];
+     const mode = customMode ? 'custom' : 'standard';
+-    
++
+     if (!silent) setLoading(true);
+     if (forceRefresh) setIsRefreshing(true);
+-    
++
+     let url = `${API_BASE_URL}/api/availability?start_date=${startStr}&end_date=${endStr}&duration=${duration}&mode=${mode}`;
+     if (friendToken) url += `&token=${friendToken}`;
+     if (forceRefresh) url += `&force_refresh=true`;
+ 
+     try {
+-        const res = await fetch(url);
+-        const data = await res.json();
+-        // Handle both old format (direct slots) and new format (with slots property)
+-        const slots = data.slots || data;
+-        setAvailability(slots);
+-        setLastRefresh(new Date());
++      const res = await fetch(url);
++      const data = await res.json();
++      const slots = data.slots || data;
++      setAvailability(slots);
++      setLastRefresh(new Date());
+     } catch (err) {
+-        console.error('Failed to fetch availability:', err);
++      console.error('Failed to fetch availability:', err);
+     } finally {
+-        setLoading(false);
+-        setIsRefreshing(false);
++      setLoading(false);
++      setIsRefreshing(false);
+     }
+   }, [currentWeekDates, customMode, duration, friendToken]);
+ 
+-  // Initial fetch when entering step 2
+   useEffect(() => {
+     if (step === 2) {
+-        fetchAvailability(false, false);
++      fetchAvailability(false, false);
+     }
+   }, [step, weekOffset, duration, customMode, friendToken]);
+ 
+-  // Auto-refresh polling when on step 2
+   useEffect(() => {
+     if (step === 2) {
+-        // Set up auto-refresh interval
+-        refreshIntervalRef.current = setInterval(() => {
+-            fetchAvailability(false, true); // Silent refresh
+-        }, AUTO_REFRESH_INTERVAL);
+-        
+-        return () => {
+-            if (refreshIntervalRef.current) {
+-                clearInterval(refreshIntervalRef.current);
+-            }
+-        };
++      refreshIntervalRef.current = setInterval(() => {
++        fetchAvailability(false, true);
++      }, AUTO_REFRESH_INTERVAL);
++      return () => {
++        if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
++      };
+     }
+   }, [step, fetchAvailability]);
+ 
+-  // Manual refresh handler
+-  const handleManualRefresh = () => {
+-    fetchAvailability(true, false);
+-  };
++  const handleManualRefresh = () => fetchAvailability(true, false);
+ 
+-  const enableCustomMode = () => { setCustomMode(true); setWeekOffset(1); };
++  const enableCustomMode  = () => { setCustomMode(true);  setWeekOffset(1); };
+   const disableCustomMode = () => { setCustomMode(false); setWeekOffset(0); };
+ 
+   const handleSlotClick = (isoString) => {
+-      const dateObj = new Date(isoString);
+-      setSelectedSlotISO(isoString);
+-      setDisplayDate(dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }));
+-      setDisplayTime(dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
+-      setStep(3);
++    const dateObj = new Date(isoString);
++    setSelectedSlotISO(isoString);
++    setDisplayDate(dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }));
++    setDisplayTime(dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
++    setStep(3);
+   };
+ 
+   const handleSubmit = async () => {
+     setSubmitting(true);
+     try {
+-        const payload = {
+-            name: formData.name,
+-            email: formData.email,
+-            topic: formData.topic,
+-            slot_iso: selectedSlotISO, 
+-            duration: duration,
+-            token: friendToken || null,
+-            location_type: formData.locationType || 'ONLINE',
+-            location_details: formData.locationDetails || '' ,
+-            fax_number: formData.fax_number || ""
+-        };
+-
+-        const response = await fetch(`${API_BASE_URL}/api/request-meeting`, {
+-            method: 'POST',
+-            headers: { 'Content-Type': 'application/json' },
+-            body: JSON.stringify(payload)
+-        });
+-
+-        if (response.ok) {
+-            alert("Request Sent Successfully.");
+-            onClose();
+-            setStep(1);
+-        } else {
+-            alert("Error sending request.");
+-        }
++      const payload = {
++        name: formData.name,
++        email: formData.email,
++        topic: formData.topic,
++        slot_iso: selectedSlotISO,
++        duration: duration,
++        token: friendToken || null,
++        location_type:   formData.locationType    || 'ONLINE',
++        location_details: formData.locationDetails || '',
++        fax_number:      formData.fax_number      || ""
++      };
++
++      const response = await fetch(`${API_BASE_URL}/api/request-meeting`, {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify(payload)
++      });
++
++      if (response.ok) {
++        alert("Request sent successfully.");
++        onClose();
++        setStep(1);
++      } else {
++        alert("Error sending request.");
++      }
+     } catch (error) {
+-        alert("Server error.");
++      alert("Server error.");
+     } finally {
+-        setSubmitting(false);
++      setSubmitting(false);
+     }
+   };
+ 
+   return (
+-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-0"> {/* Added padding for mobile */}
+-      <div className="relative w-full max-w-5xl bg-carbon-panel border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[90vh] md:max-h-[90vh]">
+-        
++    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 md:p-6">
++      <div className="relative w-full max-w-5xl bg-ink-50 border border-ink-300/70 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[92vh] md:max-h-[88vh]">
++
+         {/* HEADER */}
+-        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 shrink-0">
+-          <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
+-            <Calendar className="text-carbon-primary" size={20} />
+-            {customMode ? "CUSTOM LINK" : "BOOKING"}
+-          </h2>
+-          <button onClick={onClose}><X size={24} className="text-gray-500 hover:text-white"/></button>
++        <div className="flex items-center justify-between px-6 py-5 border-b border-ink-300/60 bg-ink-100/60 shrink-0">
++          <div className="flex items-center gap-3">
++            <Calendar className="text-accent" size={18} />
++            <h2 className="text-base md:text-lg text-ink-900">
++              <span className="font-serif italic">{customMode ? 'Custom slot' : 'Book a chat'}</span>
++              <span className="font-mono text-[11px] uppercase tracking-widest text-ink-600 ml-3">
++                Step {step} / 3
++              </span>
++            </h2>
++          </div>
++          <button onClick={onClose} className="text-ink-600 hover:text-ink-900 transition-colors">
++            <X size={20} />
++          </button>
+         </div>
+ 
+         {/* BODY */}
+-        <div className="p-4 md:p-6 overflow-y-auto flex-1 custom-scrollbar">
+-          
++        <div className="px-4 md:px-8 py-6 overflow-y-auto flex-1 custom-scrollbar">
++
+           {/* STEP 1: DURATION */}
+           {step === 1 && (
+-            <div className="flex flex-col items-center justify-center h-full space-y-8 py-10">
+-                <h3 className="text-xl md:text-2xl font-bold text-white text-center">Select Duration</h3>
+-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-2xl">
+-                    {[15, 30, 60].map(mins => (
+-                        <button 
+-                            key={mins}
+-                            onClick={() => { setDuration(mins); setStep(2); }}
+-                            className="p-6 md:p-8 rounded-xl border border-white/10 bg-white/5 hover:bg-carbon-primary/10 hover:border-carbon-primary transition-all group text-center"
+-                        >
+-                            <Clock size={32} className="mx-auto mb-4 text-carbon-muted group-hover:text-carbon-primary"/>
+-                            <div className="text-2xl font-bold text-white mb-2">{mins}m</div>
+-                            <div className="text-sm text-gray-500">Video Call</div>
+-                        </button>
+-                    ))}
+-                </div>
++            <div className="flex flex-col items-center justify-center h-full space-y-8 py-6 md:py-10">
++              <div className="text-center">
++                <span className="eyebrow">Duration</span>
++                <h3 className="mt-2 text-2xl md:text-3xl font-serif italic font-normal text-ink-900">
++                  How long should we&nbsp;chat?
++                </h3>
++              </div>
++              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl">
++                {[15, 30, 60].map(mins => (
++                  <button
++                    key={mins}
++                    onClick={() => { setDuration(mins); setStep(2); }}
++                    className="p-6 md:p-8 rounded-2xl border border-ink-300/70 bg-ink-100 hover:border-accent hover:bg-ink-200 transition-all group text-left"
++                  >
++                    <Clock size={22} className="mb-5 text-ink-600 group-hover:text-accent transition-colors" />
++                    <div className="text-3xl md:text-4xl text-ink-900 font-serif italic mb-1">{mins}</div>
++                    <div className="text-xs font-mono uppercase tracking-widest text-ink-600">minutes</div>
++                    <div className="mt-3 text-sm text-ink-700">
++                      {mins === 15 && 'Quick question'}
++                      {mins === 30 && 'Standard chat'}
++                      {mins === 60 && 'Deep dive'}
++                    </div>
++                  </button>
++                ))}
++              </div>
+             </div>
+           )}
+ 
+-          {/* STEP 2: WEEK VIEW (RESPONSIVE) */}
++          {/* STEP 2: WEEK VIEW */}
+           {step === 2 && (
+-             <div className="h-full flex flex-col">
+-                {/* Controls */}
+-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-4 md:gap-0">
+-                    <div>
+-                        <div className="flex items-center gap-2 text-xs text-gray-500 font-mono uppercase mb-1">
+-                            <Globe size={12} /> Your Zone:
+-                        </div>
+-                        <div className="text-carbon-primary font-bold text-sm md:text-base">{userTimezone}</div>
+-                    </div>
+-                    
+-                    <div className="flex gap-2 w-full md:w-auto items-center">
+-                        {/* Refresh Button */}
+-                        <button 
+-                            onClick={handleManualRefresh}
+-                            disabled={isRefreshing}
+-                            className={`p-2 hover:bg-white/10 rounded border border-white/10 transition-all ${isRefreshing ? 'opacity-50' : ''}`}
+-                            title="Refresh availability"
+-                        >
+-                            <RefreshCcw size={16} className={`text-carbon-primary ${isRefreshing ? 'animate-spin' : ''}`} />
+-                        </button>
+-                        <button onClick={() => setWeekOffset(weekOffset - 1)} className="flex-1 md:flex-none p-2 hover:bg-white/10 rounded text-sm font-bold border border-white/10">← Prev</button>
+-                        <button onClick={() => setWeekOffset(weekOffset + 1)} className="flex-1 md:flex-none p-2 hover:bg-white/10 rounded text-sm font-bold border border-white/10">Next →</button>
+-                    </div>
++            <div className="h-full flex flex-col">
++              {/* Controls row */}
++              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-4">
++                <div>
++                  <div className="flex items-center gap-2 eyebrow">
++                    <Globe size={11} /> Your zone
++                  </div>
++                  <div className="text-ink-900 text-sm md:text-base mt-1">{userTimezone}</div>
+                 </div>
+ 
+-                {/* Auto-refresh indicator */}
+-                {lastRefresh && (
+-                    <div className="text-xs text-gray-600 font-mono mb-2 flex items-center gap-2">
+-                        <span className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`}></span>
+-                        {isRefreshing ? 'Refreshing...' : `Live • Auto-updates every 30s`}
+-                    </div>
+-                )}
+-
+-                <h3 className="text-xl md:text-2xl font-bold text-white text-center mb-6 tracking-wide">
+-                    {getMonthTitle()}
+-                </h3>
++                <div className="flex gap-2 w-full md:w-auto items-center">
++                  <button
++                    onClick={handleManualRefresh}
++                    disabled={isRefreshing}
++                    className={`p-2 hover:bg-ink-200 rounded-lg border border-ink-300/70 transition-all ${isRefreshing ? 'opacity-50' : ''}`}
++                    title="Refresh availability"
++                  >
++                    <RefreshCcw size={14} className={`text-ink-700 ${isRefreshing ? 'animate-spin' : ''}`} />
++                  </button>
++                  <button
++                    onClick={() => setWeekOffset(weekOffset - 1)}
++                    className="flex-1 md:flex-none px-3 py-2 hover:bg-ink-200 rounded-lg text-sm border border-ink-300/70 text-ink-800"
++                  >
++                    ← Prev
++                  </button>
++                  <button
++                    onClick={() => setWeekOffset(weekOffset + 1)}
++                    className="flex-1 md:flex-none px-3 py-2 hover:bg-ink-200 rounded-lg text-sm border border-ink-300/70 text-ink-800"
++                  >
++                    Next →
++                  </button>
++                </div>
++              </div>
+ 
+-                {/* ALERTS (Keeping existing alert logic) */}
+-                {customMode && (
+-                    friendToken ? (
+-                        <div className="bg-green-500/10 border border-green-500/30 p-3 rounded mb-4 flex items-center gap-3">
+-                            <Zap className="text-green-500 shrink-0 fill-green-500/20" size={20} />
+-                            <div className="flex-1">
+-                                <p className="text-sm text-green-200 font-bold">VIP ACCESS</p>
+-                            </div>
+-                        </div>
+-                    ) : (
+-                        <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded mb-4 flex items-center justify-between gap-3">
+-                            <div className="flex items-center gap-3">
+-                                <AlertTriangle className="text-yellow-500 shrink-0" size={20} />
+-                                <p className="text-sm text-yellow-200"><strong>Custom Mode</strong></p>
+-                            </div>
+-                            <button onClick={disableCustomMode} className="text-xs font-bold text-yellow-500 underline">Standard</button>
+-                        </div>
+-                    )
+-                )}
+-                
+-                {loading ? (
+-                    <div className="flex-1 flex items-center justify-center text-carbon-primary animate-pulse min-h-[200px]">Searching...</div>
++              {lastRefresh && (
++                <div className="text-xs font-mono text-ink-600 mb-3 flex items-center gap-2">
++                  <span className={`w-1.5 h-1.5 rounded-full ${isRefreshing ? 'bg-yellow-500 animate-pulse' : 'bg-emerald-500/80'}`} />
++                  {isRefreshing ? 'Refreshing…' : 'Live · auto-updates every 30s'}
++                </div>
++              )}
++
++              <h3 className="text-center text-lg md:text-xl text-ink-900 font-serif italic mb-5">
++                {getMonthTitle()}
++              </h3>
++
++              {customMode && (
++                friendToken ? (
++                  <div className="bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 rounded-lg mb-4 flex items-center gap-3">
++                    <Zap className="text-emerald-400 shrink-0" size={16} />
++                    <p className="text-sm text-emerald-200">VIP access — weekends visible</p>
++                  </div>
+                 ) : (
+-                    /* --- ⚡ RESPONSIVE GRID CHANGE ⚡ --- */
+-                    /* Mobile: grid-cols-1 (Vertical Stack). Desktop: grid-cols-5 (Horizontal) */
+-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 flex-1 overflow-x-auto md:overflow-x-visible">
+-                        {currentWeekDates.map(date => {
+-                            const dateStr = date.toISOString().split('T')[0];
+-                            const slots = availability[dateStr] || [];
+-                            const dayName = date.toLocaleDateString(undefined, { weekday: 'short' });
+-                            const dayNum = date.getDate();
+-                            const today = isToday(date);
+-
+-                            return (
+-                                <div 
+-                                    key={dateStr} 
+-                                    /* Mobile: Fixed Height (h-80). Desktop: Fill Height (h-full) */
+-                                    className={`flex flex-col h-80 md:h-full rounded-lg border overflow-hidden relative transition-all ${
+-                                        today 
+-                                        ? 'border-carbon-primary bg-carbon-primary/5 shadow-[0_0_15px_rgba(168,85,247,0.15)] z-10' 
+-                                        : 'bg-black/40 border-white/5'
+-                                    }`}
+-                                >
+-                                    {/* Header */}
+-                                    <div className={`text-center p-3 border-b flex md:block items-center justify-between md:justify-center ${
+-                                        today ? 'bg-carbon-primary/10 border-carbon-primary/30' : 'bg-black/40 border-white/5'
+-                                    }`}>
+-                                        <div className={`text-xs uppercase font-bold md:mb-1 ${today ? 'text-carbon-primary' : 'text-gray-500'}`}>{dayName}</div>
+-                                        <div className={`text-xl md:text-3xl font-black ${today ? 'text-carbon-primary' : 'text-white'}`}>
+-                                            {dayNum}
+-                                        </div>
+-                                    </div>
+-                                    
+-                                    {/* Slots Container */}
+-                                    <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
+-                                        {slots.length === 0 ? (
+-                                            <div className="text-xs text-center text-gray-700 py-10">No Slots</div>
+-                                        ) : (
+-                                            slots.map(isoTime => {
+-                                                const localTime = new Date(isoTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+-                                                return (
+-                                                    <button
+-                                                        key={isoTime}
+-                                                        onClick={() => handleSlotClick(isoTime)}
+-                                                        className={`w-full py-3 rounded border text-base font-medium transition-all ${
+-                                                            customMode 
+-                                                            ? 'border-yellow-500/30 text-yellow-500 hover:bg-yellow-500 hover:text-black' 
+-                                                            : 'border-carbon-primary/20 text-carbon-primary hover:bg-carbon-primary hover:text-black'
+-                                                        }`}
+-                                                    >
+-                                                        {localTime}
+-                                                    </button>
+-                                                )
+-                                            })
+-                                        )}
+-                                    </div>
+-                                </div>
+-                            );
+-                        })}
++                  <div className="bg-amber-500/10 border border-amber-500/30 px-4 py-3 rounded-lg mb-4 flex items-center justify-between gap-3">
++                    <div className="flex items-center gap-3">
++                      <AlertTriangle className="text-amber-400 shrink-0" size={16} />
++                      <p className="text-sm text-amber-200">Custom mode</p>
+                     </div>
+-                )}
++                    <button onClick={disableCustomMode} className="text-xs text-amber-300 underline">
++                      Back to standard
++                    </button>
++                  </div>
++                )
++              )}
++
++              {loading ? (
++                <div className="flex-1 flex items-center justify-center text-ink-600 min-h-[200px] font-mono text-sm tracking-wider">
++                  Searching availability…
++                </div>
++              ) : (
++                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 flex-1 overflow-x-auto md:overflow-visible">
++                  {currentWeekDates.map(date => {
++                    const dateStr = date.toISOString().split('T')[0];
++                    const slots = availability[dateStr] || [];
++                    const dayName = date.toLocaleDateString(undefined, { weekday: 'short' });
++                    const dayNum = date.getDate();
++                    const today = isToday(date);
++
++                    return (
++                      <div
++                        key={dateStr}
++                        className={`flex flex-col h-80 md:h-full rounded-xl border overflow-hidden transition-all ${
++                          today
++                            ? 'border-accent/60 bg-accent/5'
++                            : 'border-ink-300/60 bg-ink-100/40'
++                        }`}
++                      >
++                        <div className={`text-center px-3 py-3 border-b flex md:block items-center justify-between md:justify-center ${
++                          today ? 'bg-accent/10 border-accent/30' : 'bg-ink-200/40 border-ink-300/60'
++                        }`}>
++                          <div className={`font-mono text-[10px] uppercase tracking-widest md:mb-1 ${today ? 'text-accent' : 'text-ink-600'}`}>
++                            {dayName}
++                          </div>
++                          <div className={`text-2xl md:text-3xl font-serif italic ${today ? 'text-accent' : 'text-ink-900'}`}>
++                            {dayNum}
++                          </div>
++                        </div>
+ 
+-                {/* Footer Toggle */}
+-                {!customMode && (
+-                    <div className="mt-6 pt-4 border-t border-white/10 pb-10 md:pb-0"> {/* Extra padding for mobile bottom */}
+-                        <button 
+-                            onClick={enableCustomMode}
+-                            className="w-full py-4 rounded-xl border border-carbon-primary/30 text-carbon-primary font-bold uppercase tracking-wider hover:bg-carbon-primary/10 hover:border-carbon-primary transition-all flex flex-col md:flex-row items-center justify-center gap-2"
+-                        >
+-                            <span>Request Custom Slot</span>
+-                        </button>
+-                    </div>
+-                )}
+-             </div>
++                        <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
++                          {slots.length === 0 ? (
++                            <div className="text-xs text-center text-ink-600 py-10">No slots</div>
++                          ) : (
++                            slots.map(isoTime => {
++                              const localTime = new Date(isoTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
++                              return (
++                                <button
++                                  key={isoTime}
++                                  onClick={() => handleSlotClick(isoTime)}
++                                  className={`w-full py-2.5 rounded-lg border text-sm font-medium transition-all ${
++                                    customMode
++                                      ? 'border-amber-500/30 text-amber-300 hover:bg-amber-500 hover:text-ink-0 hover:border-amber-500'
++                                      : 'border-ink-300/70 text-ink-800 hover:bg-accent hover:text-ink-0 hover:border-accent'
++                                  }`}
++                                >
++                                  {localTime}
++                                </button>
++                              );
++                            })
++                          )}
++                        </div>
++                      </div>
++                    );
++                  })}
++                </div>
++              )}
++
++              {!customMode && (
++                <div className="mt-6 pt-4 border-t border-ink-300/60 pb-4 md:pb-0">
++                  <button
++                    onClick={enableCustomMode}
++                    className="w-full py-3 rounded-full border border-ink-300/70 text-ink-700 hover:text-accent hover:border-accent transition-all text-sm"
++                  >
++                    Can't find a slot? Request a custom time →
++                  </button>
++                </div>
++              )}
++            </div>
+           )}
+ 
+           {/* STEP 3: FORM */}
+           {step === 3 && (
+-            <div className="max-w-lg mx-auto py-4 space-y-6">
+-                <div className={`p-4 border rounded-lg flex items-center gap-4 ${customMode ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-carbon-primary/10 border-carbon-primary/30'}`}>
+-                    <CheckCircle className={customMode ? "text-yellow-500" : "text-carbon-primary"} size={24} />
+-                    <div>
+-                        <div className="text-sm text-gray-400">Requesting:</div>
+-                        <div className="text-lg font-bold text-white">
+-                            {displayDate} @ {displayTime}
+-                        </div>
+-                        <div className="text-xs text-gray-500">{duration} Minutes</div>
+-                    </div>
++            <div className="max-w-xl mx-auto py-4 space-y-6">
++              <div className={`px-4 py-4 border rounded-xl flex items-center gap-4 ${
++                customMode ? 'bg-amber-500/10 border-amber-500/30' : 'bg-accent/8 border-accent/30'
++              }`}>
++                <CheckCircle className={customMode ? "text-amber-400" : "text-accent"} size={20} />
++                <div>
++                  <div className="font-mono text-[10px] uppercase tracking-widest text-ink-600">Requesting</div>
++                  <div className="text-ink-900 text-base mt-0.5">
++                    {displayDate} · {displayTime}
++                  </div>
++                  <div className="text-xs text-ink-600 mt-0.5">{duration} minutes</div>
++                </div>
++              </div>
++
++              <div className="space-y-4">
++                <div className="bg-ink-100 p-1 rounded-full flex border border-ink-300/70">
++                  <button
++                    onClick={() => setFormData({ ...formData, locationType: 'ONLINE' })}
++                    className={`flex-1 py-2.5 text-sm rounded-full transition-all ${
++                      !formData.locationType || formData.locationType === 'ONLINE'
++                        ? 'bg-ink-900 text-ink-0'
++                        : 'text-ink-700 hover:text-ink-900'
++                    }`}
++                  >
++                    Online
++                  </button>
++                  <button
++                    onClick={() => setFormData({ ...formData, locationType: 'IN_PERSON' })}
++                    className={`flex-1 py-2.5 text-sm rounded-full transition-all ${
++                      formData.locationType === 'IN_PERSON'
++                        ? 'bg-ink-900 text-ink-0'
++                        : 'text-ink-700 hover:text-ink-900'
++                    }`}
++                  >
++                    In person
++                  </button>
+                 </div>
+ 
+-                <div className="space-y-4">
+-                     {/* LOCATION TOGGLE */}
+-                     <div className="bg-black/30 p-1 rounded-lg flex mb-6 border border-white/10">
+-                        <button 
+-                            onClick={() => setFormData({...formData, locationType: 'ONLINE'})}
+-                            className={`flex-1 py-3 text-sm font-bold rounded transition-all ${!formData.locationType || formData.locationType === 'ONLINE' ? 'bg-carbon-primary text-black' : 'text-gray-400 hover:text-white'}`}
+-                        >
+-                            💻 Online
+-                        </button>
+-                        <button 
+-                            onClick={() => setFormData({...formData, locationType: 'IN_PERSON'})}
+-                            className={`flex-1 py-3 text-sm font-bold rounded transition-all ${formData.locationType === 'IN_PERSON' ? 'bg-carbon-primary text-black' : 'text-gray-400 hover:text-white'}`}
+-                        >
+-                            📍 In Person
+-                        </button>
+-                    </div>
++                {formData.locationType === 'IN_PERSON' && (
++                  <InputField
++                    label="Meeting location"
++                    value={formData.locationDetails || ''}
++                    onChange={e => setFormData({ ...formData, locationDetails: e.target.value })}
++                    placeholder="e.g. coffee shop, UQ St Lucia"
++                  />
++                )}
+ 
+-                    {formData.locationType === 'IN_PERSON' && (
+-                        <div className="mb-6">
+-                            <InputField label="Meeting Location" value={formData.locationDetails || ''} onChange={e => setFormData({...formData, locationDetails: e.target.value})} placeholder="e.g. Coffee Shop, UQ Campus" />
+-                        </div>
+-                    )}
+-
+-                    <InputField label="Full Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="John Doe" />
+-                    <InputField label="Email Address" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="john@example.com" />
+-                    
+-                    <div className="space-y-1">
+-                        <label className="text-sm font-bold text-gray-400">Topic</label>
+-                        <textarea 
+-                            className="w-full bg-black/30 border border-white/10 rounded p-3 text-white focus:border-carbon-primary outline-none min-h-[100px]"
+-                            placeholder="What's this about?"
+-                            value={formData.topic}
+-                            onChange={e => setFormData({...formData, topic: e.target.value})}
+-                        />
+-                    </div>
++                <InputField
++                  label="Full name"
++                  value={formData.name}
++                  onChange={e => setFormData({ ...formData, name: e.target.value })}
++                  placeholder="Jane Doe"
++                />
++                <InputField
++                  label="Email address"
++                  type="email"
++                  value={formData.email}
++                  onChange={e => setFormData({ ...formData, email: e.target.value })}
++                  placeholder="jane@example.com"
++                />
++
++                <div className="space-y-1.5">
++                  <label className="font-mono text-[10px] uppercase tracking-widest text-ink-600">Topic</label>
++                  <textarea
++                    className="w-full bg-ink-100 border border-ink-300/70 rounded-lg p-3 text-ink-900 focus:border-accent outline-none min-h-[100px] placeholder:text-ink-600"
++                    placeholder="What would you like to talk about?"
++                    value={formData.topic}
++                    onChange={e => setFormData({ ...formData, topic: e.target.value })}
++                  />
+                 </div>
+-
+-                <button 
+-                    onClick={handleSubmit}
+-                    disabled={submitting}
+-                    className={`w-full py-4 text-black font-bold rounded-lg transition-all text-lg flex items-center justify-center gap-2 ${
+-                        customMode ? 'bg-yellow-500' : 'bg-carbon-primary'
+-                    } ${submitting ? 'opacity-50' : ''}`}
+-                >
+-                    {submitting ? "Processing..." : "Confirm Request"}
+-                </button>
++              </div>
++
++              <button
++                onClick={handleSubmit}
++                disabled={submitting}
++                className={`w-full py-3.5 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-2 ${
++                  customMode
++                    ? 'bg-amber-500 text-ink-0 hover:bg-amber-400'
++                    : 'bg-ink-900 text-ink-0 hover:bg-accent'
++                } ${submitting ? 'opacity-50' : ''}`}
++              >
++                {submitting ? 'Sending…' : 'Send request'}
++              </button>
+             </div>
+           )}
+-
+         </div>
+-        
++
+         {step > 1 && (
+-            <div className="p-4 border-t border-white/10 bg-white/5">
+-                <button onClick={() => setStep(step - 1)} className="text-sm text-gray-400 hover:text-white flex items-center gap-1">
+-                    <ArrowLeft size={16} /> Back
+-                </button>
+-            </div>
++          <div className="px-6 py-3 border-t border-ink-300/60 bg-ink-100/60">
++            <button
++              onClick={() => setStep(step - 1)}
++              className="text-sm text-ink-700 hover:text-ink-900 flex items-center gap-1.5 transition-colors"
++            >
++              <ArrowLeft size={14} /> Back
++            </button>
++          </div>
+         )}
+-
+       </div>
+     </div>
+   );
+ };
+ 
+-const InputField = ({ label, type="text", value, onChange, placeholder }) => (
+-    <div className="space-y-1">
+-        <label className="text-sm font-bold text-gray-400">{label}</label>
+-        <input 
+-            type={type} 
+-            value={value} 
+-            onChange={onChange}
+-            placeholder={placeholder}
+-            className="w-full bg-black/30 border border-white/10 rounded p-3 text-white focus:border-carbon-primary outline-none" 
+-        />
+-    </div>
++const InputField = ({ label, type = "text", value, onChange, placeholder }) => (
++  <div className="space-y-1.5">
++    <label className="font-mono text-[10px] uppercase tracking-widest text-ink-600">{label}</label>
++    <input
++      type={type}
++      value={value}
++      onChange={onChange}
++      placeholder={placeholder}
++      className="w-full bg-ink-100 border border-ink-300/70 rounded-lg p-3 text-ink-900 focus:border-accent outline-none placeholder:text-ink-600"
++    />
++  </div>
+ );
+ 
+-export default BookingModal;
+\ No newline at end of file
++export default BookingModal;
+diff --git a/carbon-calendar/src/components/Contact.jsx b/carbon-calendar/src/components/Contact.jsx
+index dbed0f5..3730f5f 100644
+--- a/carbon-calendar/src/components/Contact.jsx
++++ b/carbon-calendar/src/components/Contact.jsx
+@@ -1,71 +1,84 @@
+-import { Linkedin, ExternalLink } from 'lucide-react';
+-import { motion } from 'framer-motion';
++import { ArrowUpRight, Mail, Github, Linkedin } from 'lucide-react';
+ 
+-// UPDATE THIS WITH YOUR LINKEDIN URL
+-const LINKEDIN_URL = "https://www.linkedin.com/in/zain-al-saffi-881492250/";
++const LINKS = [
++  {
++    label: 'Email',
++    handle: 'zainalsaffi@gmail.com',
++    href: 'mailto:zainalsaffi@gmail.com',
++    icon: Mail,
++  },
++  {
++    label: 'LinkedIn',
++    handle: 'linkedin.com/zain-al-saffi',
++    href: 'https://www.linkedin.com/in/zain-al-saffi-881492250/',
++    icon: Linkedin,
++  },
++  {
++    label: 'GitHub',
++    handle: 'github.com/ZainAlSaffi-Dev',
++    href: 'https://github.com/ZainAlSaffi-Dev',
++    icon: Github,
++  },
++];
+ 
+-const Contact = () => {
+-    return (
+-        <motion.section 
+-            id="contact"
+-            initial={{ opacity: 0, y: 50 }}
+-            whileInView={{ opacity: 1, y: 0 }}
+-            transition={{ duration: 0.6 }}
+-            viewport={{ once: true }}
+-            className="py-16 md:py-24 px-4 md:px-6 max-w-7xl mx-auto"
+-        >
+-            {/* Section Header */}
+-            <div className="mb-10 md:mb-16 text-center">
+-                <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
+-                    CONTACT<span className="text-carbon-primary">_ME</span>
+-                </h2>
+-                <div className="h-1 w-24 bg-carbon-primary mx-auto rounded-full" />
+-            </div>
++const Contact = ({ onOpenBooking }) => {
++  return (
++    <div className="px-6 py-28 md:py-36">
++      <div className="max-w-5xl mx-auto">
+ 
+-            {/* Contact Card */}
+-            <div className="max-w-md mx-auto">
+-                <motion.a
+-                    href={LINKEDIN_URL}
+-                    target="_blank"
+-                    rel="noopener noreferrer"
+-                    className="group block p-8 md:p-10 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-carbon-primary/50 transition-all duration-300 backdrop-blur-sm"
+-                    whileHover={{ scale: 1.02 }}
+-                    whileTap={{ scale: 0.98 }}
+-                >
+-                    <div className="flex flex-col items-center text-center gap-6">
+-                        {/* LinkedIn Icon */}
+-                        <div className="p-4 rounded-full bg-[#0A66C2]/10 border border-[#0A66C2]/30 group-hover:bg-[#0A66C2]/20 group-hover:border-[#0A66C2]/50 transition-all">
+-                            <Linkedin 
+-                                size={48} 
+-                                className="text-[#0A66C2] group-hover:drop-shadow-[0_0_15px_rgba(10,102,194,0.5)] transition-all"
+-                            />
+-                        </div>
+-                        
+-                        {/* Text */}
+-                        <div>
+-                            <h3 className="text-xl md:text-2xl font-bold text-white mb-2 group-hover:text-carbon-primary transition-colors">
+-                                LinkedIn
+-                            </h3>
+-                            <p className="text-gray-400 text-sm md:text-base mb-4">
+-                                Connect with me professionally
+-                            </p>
++        <div className="grid md:grid-cols-12 gap-12">
++          <div className="md:col-span-6">
++            <span className="eyebrow">Contact</span>
++            <h2 className="mt-2 text-4xl md:text-5xl font-serif italic font-normal text-ink-900 leading-tight tracking-tighter2">
++              Say hello.
++            </h2>
++            <p className="mt-6 text-ink-800 text-lg leading-relaxed max-w-reading">
++              Happy to chat about quant research, ML, software, or any of the
++              projects on this site. Easiest way is a quick 15-minute call, but
++              email works too.
++            </p>
++
++            <button
++              onClick={onOpenBooking}
++              className="mt-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-ink-900 text-ink-0 text-sm font-medium hover:bg-accent transition-colors group"
++            >
++              Book a chat
++              <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
++            </button>
++          </div>
++
++          <div className="md:col-span-6">
++            <ul className="border-t border-b border-ink-300/60 divide-y divide-ink-300/60">
++              {LINKS.map(({ label, handle, href, icon: Icon }) => (
++                <li key={label}>
++                  <a
++                    href={href}
++                    target={href.startsWith('http') ? '_blank' : undefined}
++                    rel={href.startsWith('http') ? 'noreferrer' : undefined}
++                    className="flex items-center justify-between py-5 group"
++                  >
++                    <div className="flex items-center gap-4">
++                      <Icon size={18} className="text-ink-600 group-hover:text-accent transition-colors" />
++                      <div>
++                        <div className="font-mono text-[11px] uppercase tracking-widest text-ink-600">
++                          {label}
+                         </div>
+-                        
+-                        {/* Link indicator */}
+-                        <div className="flex items-center gap-2 text-carbon-primary font-mono text-sm">
+-                            <span>View Profile</span>
+-                            <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
++                        <div className="text-ink-900 group-hover:text-accent transition-colors">
++                          {handle}
+                         </div>
++                      </div>
+                     </div>
+-                </motion.a>
+-                
+-                {/* Subtitle */}
+-                <p className="text-center text-gray-500 text-sm mt-8 font-mono">
+-                    // Feel free to reach out for opportunities, collaborations, or just to say hi!
+-                </p>
+-            </div>
+-        </motion.section>
+-    );
++                    <ArrowUpRight size={16} className="text-ink-600 group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
++                  </a>
++                </li>
++              ))}
++            </ul>
++          </div>
++        </div>
++
++      </div>
++    </div>
++  );
+ };
+ 
+ export default Contact;
+diff --git a/carbon-calendar/src/components/ExperienceFeed.jsx b/carbon-calendar/src/components/ExperienceFeed.jsx
+index 5f08122..076b73f 100644
+--- a/carbon-calendar/src/components/ExperienceFeed.jsx
++++ b/carbon-calendar/src/components/ExperienceFeed.jsx
+@@ -1,427 +1,217 @@
+-import { Briefcase, Trophy, Code, GraduationCap, Users, TrendingUp, BookOpen } from 'lucide-react';
+-
+-// NOTE: We no longer need to import the icons here, as we are using images.
+-
+-// 0. EDUCATION DATA
+-const educationData = [
+-    {
+-        id: 'uq-masters',
+-        role: "Master of Engineering",
+-        company: "The University of Queensland",
+-        date: "Feb 2024 - June 2029",
+-        logo: "/logos/uq2.png",
+-        description: "Specializing in Embedded Software and Machine Learning.",
+-        tech: ["GPA: 7.00/7.00", "Dean's Excellence Award 2025"]
+-    },
+-    {
+-        id: 'uq-bachelors',
+-        role: "Bachelor of Engineering (Honours)",
+-        company: "The University of Queensland",
+-        date: "Feb 2024 - June 2029",
+-        logo: "/logos/uq2.png",
+-        description: "Specializing in Embedded Software and Machine Learning.",
+-        tech: ["GPA: 7.00/7.00", "Dean's Excellence Award 2025"]
+-    }
++// Editorial list of work + leadership.
++// No timeline dots, no neon, no card chrome — just a clean tabular layout.
++
++const WORK = [
++  {
++    company: 'Optiver',
++    location: 'Sydney',
++    role: 'Quantitative Research Intern (incoming)',
++    date: 'Dec 2026 — Feb 2027',
++    bullets: [
++      'Selected as the first student in the program’s history to receive offers from both available streams simultaneously — Quantitative Research and Software Engineering.',
++    ],
++    tags: ['Quant Research', 'Probability', 'C++'],
++  },
++  {
++    company: 'Optiver',
++    location: 'Sydney',
++    role: 'FutureFocus Program & Campus Ambassador',
++    date: 'Sep 2025 — Present',
++    bullets: [
++      'Lead Optiver’s presence at UQ careers fairs and workshops; serve as the UQ liaison converting student interest into candidate pipelines.',
++    ],
++    tags: ['Recruitment', 'Public Speaking'],
++  },
++  {
++    company: 'Eucalyptus',
++    location: 'Brisbane',
++    role: 'AI Growth Intern',
++    date: 'Apr 2026 — Present',
++    bullets: [
++      'Engineered a multi-source GLP-1 sentiment monitoring pipeline ingesting Reddit, Facebook and news APIs with lift-score & word-frequency analysis to surface emerging narrative trends; implemented threshold-based alerts notifying marketing leadership to enable first-mover positioning.',
++      'Conducted Spearman rank correlation and regression analysis on unconverted patient survey data, linking side-effect sentiment to funnel stage — findings pivoted the firm’s marketing strategy.',
++    ],
++    tags: ['Python', 'NLP', 'Statistics', 'Reddit / Meta APIs'],
++  },
++  {
++    company: 'University of Queensland',
++    location: 'St Lucia',
++    role: 'Research Assistant',
++    date: 'Oct 2025 — Present',
++    bullets: [
++      'Implemented Meta Content Library API querying via asynchronous batch endpoints with rolling Z-score anomaly detection across three Facebook groups; findings contributed to Who Decides the Transition? Governance and Legitimacy in Offshore Wind Development.',
++      'Built an end-to-end NLP pipeline with a custom sentiment lexicon and lift-score word-frequency analysis; computed Spearman rank correlations to measure recommendation-algorithm amplification bias across oppositional and pro-development discourse communities.',
++    ],
++    tags: ['Python', 'NLP', 'Meta API', 'Pandas'],
++  },
++  {
++    company: 'University of Queensland',
++    location: 'St Lucia',
++    role: 'Casual Academic Tutor — COMP3710',
++    date: 'Jun 2025 — Present',
++    bullets: [
++      'Instruct 20+ students weekly on machine and deep-learning models and techniques in Pattern Recognition & Analysis.',
++    ],
++    tags: ['Teaching', 'Deep Learning'],
++  },
++  {
++    company: 'SVPartners',
++    location: 'Brisbane',
++    role: 'Insolvency Law Intern',
++    date: 'Feb 2026 — Mar 2026',
++    bullets: [
++      'Conducted legal research into insolvency case law and ex parte procedural requirements to synthesise provisions from the Bankruptcy Act 1966 and Corporations Act 2001 and evaluate the validity of corporate documentation administered on the Insolv platform.',
++    ],
++    tags: ['Legal Research', 'Bankruptcy Act', 'Corporations Act'],
++  },
++  {
++    company: 'Thiess',
++    location: 'South Bank',
++    role: 'Data Science Intern',
++    date: 'Dec 2024 — Feb 2025',
++    bullets: [
++      'Developed a statistical learning state machine using Gaussian Mixture Models and IMM-EKF for real-time truck operation classification and sensor fusion, enhancing reliability and reducing costs by 20%.',
++      'Conducted extensive data cleaning and feature engineering with PySpark, SQL and Jupyter, joining disparate telemetry datasets and modelling sensor noise.',
++      'Developed a linear model to correct timestamp misalignment, ensuring synchronisation across data sources.',
++    ],
++    tags: ['PySpark', 'SQL', 'GMM / IMM-EKF', 'Azure Databricks'],
++  },
++  {
++    company: 'UQ Racing',
++    location: 'St Lucia',
++    role: 'Lead Software Engineer',
++    date: 'Nov 2024 — Jun 2025',
++    bullets: [
++      'Led ROS-to-ROS2 migration in Python and C++, integrating TensorRT-quantised YOLOv11 for faster, more accurate cone detection in real-time autonomous navigation.',
++      'Built a Dockerised ROS2-Gazebo simulation environment enabling remote development and virtual testing, boosting testing availability by 80% and accelerating R&D deployment.',
++    ],
++    tags: ['ROS2', 'C++', 'TensorRT', 'Docker'],
++  },
++  {
++    company: 'UQ Racing',
++    location: 'St Lucia',
++    role: 'Software Engineer',
++    date: 'Feb 2024 — Nov 2024',
++    bullets: [
++      'Developed path-planning algorithms using a perception stack integrating YOLOv8, Lidar and INS data with Delaunay Triangulation for track driving.',
++    ],
++    tags: ['YOLOv8', 'Lidar', 'Path Planning'],
++  },
+ ];
+ 
+-// 1. PROFESSIONAL EXPERIENCE (Jobs)
+-const workHistory = [
+-    {
+-        id: 'optiver-qr',
+-        role: "Quantitative Research Intern",
+-        company: "Optiver",
+-        date: "Incoming (Dec 2026 - Feb 2027)",
+-        logo: "/logos/optiver2.png",
+-        description: "Incoming intern in the D1 quantitative research team.",
+-        tech: ["Quant Research", "Probability", "D1 Team", "Machine Learning"]
+-    },
+-    {
+-        id: 'optiver-ambassador',
+-        role: "Campus Ambassador",
+-        company: "Optiver",
+-        date: "Nov 2025 - Present",
+-        logo: "/logos/optiver2.png",
+-        description: [
+-            "Lead Optiver's presence at UQ careers fairs and workshops.",
+-            "Serve as UQ liaison to convert student interest into candidate pipelines."
+-        ],
+-        tech: ["Recruitment", "Public Speaking", "Quantitative Finance"]
+-    },
+-    {
+-        id: 'optiver-futurefocus',
+-        role: "Future Focus Program",
+-        company: "Optiver",
+-        date: "Sep 2025 - Oct 2025",
+-        logo: "/logos/optiver2.png",
+-        description: [
+-            "Selected as part of 50 candidates out of 5,000+ to participate in a series of exercises involving market making, volatility calculations, and software engineering design.",
+-            "Became the first candidate in Optiver history to be extended two offers from the program for both Software Engineering and Quantitative Research roles."
+-        ],
+-        tech: ["Elite Program", "Quantitative Finance", "Software Engineering"]
+-    },
+-    {
+-        id: 'svp-intern',
+-        role: "Law & Insolvency Intern",
+-        company: "SVPartners",
+-        date: "Feb 2026 - May 2026",
+-        logo: "/logos/svpartners.png", 
+-        description: "Incoming Winter Insolvency Intern at SVPartners.",
+-        tech: ["Insolvency", "Finance", "Law"]
+-    },
+-    {
+-        id: 'thiess-ds',
+-        role: "Data Science Intern",
+-        company: "Thiess",
+-        date: "Dec 2024 - Feb 2025",
+-        logo: "/logos/Thiess.png",
+-        description: [
+-            "Developed a statistical learning state machine using Gaussian Mixture Models and IMM-EKF for real-time truck operation classification and sensor fusion, enhancing reliability and reducing costs by 20%.",
+-            "Conducted extensive data cleaning and feature engineering using PySpark, SQL, and Jupyter Notebooks, including joining disparate telemetry datasets and modelling sensor noise.",
+-            "Developed a linear model to correct timestamp misalignment, ensuring synchronisation across data sources."
+-        ],
+-        tech: ["PySpark", "Statistics", "Probability Theory", "SQL", "Feature Engineering", "Azure Databricks"]
+-    },
+-    {
+-        id: 'uq-research',
+-        role: "Research Assistant",
+-        company: "University of Queensland",
+-        date: "Oct 2025 - Present",
+-        logo: "/logos/uq2.png",
+-        description: [
+-            "Collecting and structuring Facebook group data using Meta's Content Library API for sentiment analysis of offshore wind projects.",
+-            "Designed NLP pipeline compliant with Privacy Act."
+-        ],
+-        tech: ["Python", "NLP", "Meta API", "Data Pipelines"]
+-    },
+-    {
+-        id: 'uq-racing-lead',
+-        role: "Lead Software Engineer",
+-        company: "UQ Racing",
+-        date: "Nov 2024 - June 2025",
+-        logo: "/logos/uqracing.png",
+-        description: [
+-            "Led ROS-to-ROS2 migration in Python and C++, integrating TensorRT-quantised YOLOv11 for faster, more accurate cone detection in real-time autonomous navigation.",
+-            "Built a Dockerised ROS2-Gazebo simulation environment enabling remote development and virtual testing, boosting testing availability by 80% and accelerating R&D deployment.",
+-            "Introduced a task-ranked project management system with strategic resource planning and regular stand-ups, eliminating missed deadlines"
+-        ],
+-        tech: ["C++", "ROS2", "Docker", "TensorRT", "Python", "Project Management", "Nvidia"]
+-    },
+-    {
+-        id: 'uq-racing-swe',
+-        role: "Software Engineer",
+-        company: "UQ Racing",
+-        date: "Feb 2024 - Nov 2024",
+-        logo: "/logos/uqracing.png",
+-        description: "Developed path planning algorithms using a perception stack integrating YOLOv8, Lidar, and INS data with Delaunay Triangulation.",
+-        tech: ["YOLOv8", "Lidar", "Path Planning"]
+-    },
+-    {
+-        id: 'uq-tutor',
+-        role: "Casual Academic Tutor",
+-        company: "University of Queensland",
+-        date: "June 2025 - Present",
+-        logo: "/logos/uq2.png",
+-        description: "Instructing 20+ students weekly in COMP3710 (Pattern Recognition and Analysis) on machine and deep learning models.",
+-        tech: ["Teaching", "Deep Learning", "COMP3710"]
+-    },
+-    {
+-        id: 'uq-ambassador-services',
+-        role: "Student Services Ambassador",
+-        company: "University of Queensland",
+-        date: "Jan 2025 - Present",
+-        logo: "/logos/uq2.png",
+-        description: "Assisting students with course selection and navigating UQ's proprietary software for enrollments.",
+-        tech: ["Student Services", "Administration"]
+-    },
+-    {
+-        id: 'uq-ambassador-future',
+-        role: "Future Students Ambassador",
+-        company: "University of Queensland",
+-        date: "Mar 2025 - Present",
+-        logo: "/logos/uq2.png",
+-        description: "Representing the university and EAIT faculty in school expos, talks and careers fairs.",
+-        tech: ["Public Relations"]
+-    }
++const LEADERSHIP = [
++  {
++    company: 'UQ Computing Society',
++    location: 'St Lucia',
++    role: 'President',
++    date: '2026',
++    bullets: [
++      'Leading end-to-end operations for 2,000+ members — events, sponsorship, and technical programming.',
++      'Secured $30k+ in sponsorship (largest in society history) and shipped a centralised project-management framework for logistics & budgeting.',
++    ],
++    tags: ['Leadership', 'Sponsorship'],
++  },
++  {
++    company: 'UQ Computing Society',
++    location: 'St Lucia',
++    role: 'Treasurer',
++    date: '2025',
++    bullets: [
++      'Built a multi-variable financial model to optimise ticket pricing against expenditure and sponsorship buffers, eliminating budget deficits and achieving 100% cost-recovery on flagship events.',
++    ],
++    tags: ['Financial Modelling', 'Operations'],
++  },
+ ];
+ 
+-// 2. LEADERSHIP & COMMUNITY (Societies)
+-const leadershipHistory = [
+-    {
+-        id: 'uqcs-president',
+-        role: "President",
+-        company: "UQ Computing Society",
+-        date: "Oct 2025 - Present",
+-        logo: "/logos/uqcs.png",
+-        description: [
+-            "Orchestrated end-to-end operations for 2,000+ members by implementing a centralized project management framework for logistics and budgeting, ensuring the seamless execution of 30+ society events.",
+-            "Assissted in the coordination of sponsorship negotiations and secured $30k+ in sponsorship (largest in society history).",
+-            "Engineered a new technical engagement strategy through the launch of industry-aligned hackathons and academic workshops, driving a measurable increase in member participation and student career-readiness"
+-        ],
+-        tech: ["Leadership", "Event Management", "Sponsorship"]
+-    },
+-    {
+-        id: 'uqcs-treasurer',
+-        role: "Treasurer",
+-        company: "UQ Computing Society",
+-        date: "May 2025 - Oct 2025",
+-        logo: "/logos/uqcs.png",
+-        description: [
+-            "Developed a multi-variable financial model to optimize ticket pricing based on expenditure and sponsorship buffers, effectively eliminating budget deficits and ensuring 100% cost-recovery on all flagship events",
+-            "Achieved a 100% event sell-out rate by leveraging data-driven budget allocation for marketing and logistics, maximizing society visibility while maintaining high-quality member experiences.",
+-            "Designed a comprehensive fiscal reporting system to track expenditure across multiple departments, resulting in more optimal resource distribution and increased reinvestable capital for future club initiatives."
+-        ],
+-        tech: ["Financial Modeling", "Budgeting", "Event Management"]
+-    },
+-    {
+-        id: 'uqcs-exec',
+-        role: "General Executive",
+-        company: "UQ Computing Society",
+-        date: "Oct 2024 - May 2025",
+-        logo: "/logos/uqcs.png",
+-        description: "Spearheaded operational logistics and digital broadcasting for large-scale technical events.",
+-        tech: ["Logistics", "A/V Infrastructure", "Event Management"]
+-    },
+-    {
+-        id: 'uq-fintech',
+-        role: "General Executive",
+-        company: "UQ Fintech",
+-        date: "May 2025 - Present",
+-        logo: "/logos/uqfintech.png",
+-        description: "Delivering technical seminars and serving as a panelist to help 100+ students break into the quant industry.",
+-        tech: ["Mentorship", "Quant Finance"]
+-    }
++const EDUCATION = [
++  {
++    company: 'The University of Queensland',
++    location: 'St Lucia',
++    role: 'B.Eng / M.Eng — Software Specialisation',
++    date: 'Feb 2024 — Nov 2028',
++    bullets: [
++      'GPA 7.00 / 7.00 · Dean’s Academic Excellence Award 2025 · Rio Tinto Future Leader Excellence Scholar.',
++    ],
++    tags: ['Software Engineering', 'Machine Learning'],
++  },
+ ];
+ 
+-// EducationCard: Mobile-first layout with logo above date bar
+-const EducationCard = ({ data }) => (
+-    <div className="relative mb-8 md:mb-16">
+-        <div className="w-full p-6 md:p-10 rounded-2xl md:rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm hover:border-carbon-primary/30 transition-all group">
+-            
+-            {/* MOBILE LAYOUT: Stacked vertically */}
+-            <div className="flex flex-col gap-4 md:gap-0">
+-                
+-                {/* Mobile: Logo centered at top */}
+-                <div className="flex justify-center md:hidden mb-2">
+-                    <img 
+-                        src={data.logo} 
+-                        alt={data.company}
+-                        className="h-12 w-auto object-contain grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-300"
+-                    />
+-                </div>
+-                
+-                {/* Mobile: Full-width date bar */}
+-                <div className="w-full md:hidden">
+-                    <span className="block w-full text-center text-sm font-mono text-carbon-primary border border-carbon-primary/30 px-4 py-2 rounded bg-carbon-primary/5">
+-                        {data.date}
+-                    </span>
+-                </div>
+-
+-                {/* DESKTOP LAYOUT: Side by side */}
+-                <div className="hidden md:flex md:flex-row items-start md:items-center gap-10">
+-                    {/* Logo Box */}
+-                    <div className="shrink-0">
+-                        <img 
+-                            src={data.logo} 
+-                            alt={data.company}
+-                            className="h-16 w-auto object-contain object-left grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-300"
+-                        />
+-                    </div>
+-
+-                    {/* Content */}
+-                    <div className="flex-1 w-full">
+-                        <div className="flex flex-row items-center justify-between mb-4 gap-4">
+-                            <h3 className="text-4xl font-bold text-white group-hover:text-carbon-primary transition-colors">
+-                                {data.role}
+-                            </h3>
+-                            <span className="text-base font-mono text-carbon-primary border border-carbon-primary/30 px-4 py-2 rounded whitespace-nowrap bg-carbon-primary/5">
+-                                {data.date}
+-                            </span>
+-                        </div>
+-
+-                        <p className="text-2xl text-gray-300 font-medium mb-6">{data.company}</p>
+-                        <p className="text-xl text-gray-300 leading-relaxed mb-8">
+-                            {data.description}
+-                        </p>
+-
+-                        <div className="flex flex-wrap gap-3">
+-                            {data.tech.map(t => (
+-                                <span key={t} className="text-base font-medium text-carbon-secondary bg-carbon-secondary/10 px-4 py-2 rounded border border-carbon-secondary/10 shadow-[0_0_10px_rgba(233,213,255,0.05)]">
+-                                    {t}
+-                                </span>
+-                            ))}
+-                        </div>
+-                    </div>
+-                </div>
+-
+-                {/* Mobile Content (below logo and date) */}
+-                <div className="md:hidden mt-2">
+-                    <h3 className="text-2xl font-bold text-white group-hover:text-carbon-primary transition-colors mb-1">
+-                        {data.role}
+-                    </h3>
+-                    <p className="text-lg text-gray-300 font-medium mb-3">{data.company}</p>
+-                    <p className="text-base text-gray-300 leading-relaxed mb-4">
+-                        {data.description}
+-                    </p>
++// ── A single row in the editorial list ────────────────────────────────────
++const Row = ({ entry }) => (
++  <article className="group grid md:grid-cols-12 gap-4 md:gap-8 py-8 border-b border-ink-300/60">
++    {/* Date column */}
++    <div className="md:col-span-3">
++      <div className="font-mono text-[11px] uppercase tracking-widest text-ink-600">
++        {entry.date}
++      </div>
++      <div className="text-ink-700 text-sm mt-1">{entry.location}</div>
++    </div>
+ 
+-                    <div className="flex flex-wrap gap-2">
+-                        {data.tech.map(t => (
+-                            <span key={t} className="text-xs font-medium text-carbon-secondary bg-carbon-secondary/10 px-2 py-1 rounded border border-carbon-secondary/10">
+-                                {t}
+-                            </span>
+-                        ))}
+-                    </div>
+-                </div>
+-            </div>
+-        </div>
++    {/* Content column */}
++    <div className="md:col-span-9">
++      <h3 className="text-xl md:text-2xl text-ink-900 leading-snug tracking-tightish">
++        <span className="font-medium">{entry.role}</span>
++        <span className="text-ink-700 font-light"> · </span>
++        <span className="font-serif italic text-ink-800 group-hover:text-accent transition-colors">
++          {entry.company}
++        </span>
++      </h3>
++
++      <ul className="mt-4 space-y-3 text-ink-800 text-[15px] leading-relaxed max-w-reading">
++        {entry.bullets.map((b, i) => (
++          <li key={i} className="relative pl-4">
++            <span className="absolute left-0 top-2.5 w-1.5 h-px bg-ink-500" />
++            {b}
++          </li>
++        ))}
++      </ul>
++
++      <div className="mt-5 flex flex-wrap gap-2">
++        {entry.tags.map((t) => (
++          <span
++            key={t}
++            className="text-xs font-mono text-ink-700 px-2 py-1 border border-ink-300/70 rounded-full"
++          >
++            {t}
++          </span>
++        ))}
++      </div>
+     </div>
++  </article>
+ );
+ 
+-// FeedItem: Mobile-first layout with logo above date bar
+-const FeedItem = ({ data, alignRight }) => (
+-    <div className={`relative flex flex-col md:flex-row gap-6 md:gap-12 ${alignRight ? 'md:flex-row-reverse' : ''}`}>
+-        {/* The Dot */}
+-        <div className="absolute left-0 md:left-1/2 w-4 md:w-5 h-4 md:h-5 bg-carbon-bg border-3 md:border-4 border-carbon-primary rounded-full translate-y-2 md:-translate-x-1/2 z-10 shadow-[0_0_15px_#a855f7]" />
+-
+-        {/* Spacer */}
+-        <div className="hidden md:block flex-1" />
+-
+-        {/* Content Card */}
+-        <div className="flex-1 pl-8 md:pl-0">
+-            <div className="p-5 md:p-10 rounded-xl md:rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors backdrop-blur-sm group">
+-                
+-                {/* MOBILE LAYOUT: Logo -> Date Bar -> Content */}
+-                <div className="md:hidden flex flex-col gap-3">
+-                    {/* Logo centered */}
+-                    <div className="flex justify-center">
+-                        <img 
+-                            src={data.logo} 
+-                            alt={data.company}
+-                            className="h-10 w-auto max-w-[120px] object-contain grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_12px_rgba(168,85,247,0.6)] transition-all duration-300"
+-                        />
+-                    </div>
+-                    
+-                    {/* Full-width date bar */}
+-                    <span className="block w-full text-center text-xs font-bold font-mono text-carbon-primary border border-carbon-primary/30 px-3 py-2 rounded bg-carbon-primary/5">
+-                        {data.date}
+-                    </span>
+-                    
+-                    {/* Title and company */}
+-                    <h3 className="text-xl font-bold text-white group-hover:text-carbon-primary transition-colors">
+-                        {data.role}
+-                    </h3>
+-                    <p className="text-base text-gray-400 font-medium -mt-2 mb-2">{data.company}</p>
+-
+-                    {/* Description */}
+-                    <div className="text-sm text-gray-200 leading-relaxed mb-3">
+-                        {Array.isArray(data.description) ? (
+-                            <ul className="list-disc pl-4 space-y-2">
+-                                {data.description.map((line, i) => (
+-                                    <li key={i}>{line}</li>
+-                                ))}
+-                            </ul>
+-                        ) : (
+-                            <p>{data.description}</p>
+-                        )}
+-                    </div>
+-
+-                    {/* Tech tags */}
+-                    <div className="flex flex-wrap gap-2">
+-                        {data.tech.map(t => (
+-                            <span key={t} className="text-xs font-bold text-carbon-secondary bg-carbon-secondary/10 px-2 py-1 rounded">
+-                                {t}
+-                            </span>
+-                        ))}
+-                    </div>
+-                </div>
+-
+-                {/* DESKTOP LAYOUT: Original side-by-side */}
+-                <div className="hidden md:block">
+-                    <div className="flex items-center justify-between mb-6">
+-                        <span className="text-sm font-bold font-mono text-carbon-primary border border-carbon-primary/30 px-3 py-1.5 rounded">
+-                            {data.date}
+-                        </span>
+-
+-                        <img 
+-                            src={data.logo} 
+-                            alt={data.company}
+-                            className="h-16 w-auto max-w-[160px] object-contain object-right grayscale brightness-200 opacity-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_12px_rgba(168,85,247,0.6)] transition-all duration-300"
+-                        />
+-                    </div>
+-
+-                    <h3 className="text-3xl font-bold text-white group-hover:text-carbon-primary transition-colors mb-2">
+-                        {data.role}
+-                    </h3>
+-                    <p className="text-xl text-gray-400 font-medium mb-6">{data.company}</p>
+-
+-                    <div className="text-lg text-gray-200 leading-relaxed mb-6">
+-                        {Array.isArray(data.description) ? (
+-                            <ul className="list-disc pl-5 space-y-3">
+-                                {data.description.map((line, i) => (
+-                                    <li key={i}>{line}</li>
+-                                ))}
+-                            </ul>
+-                        ) : (
+-                            <p>{data.description}</p>
+-                        )}
+-                    </div>
+-
+-                    <div className="flex flex-wrap gap-3">
+-                        {data.tech.map(t => (
+-                            <span key={t} className="text-sm font-bold text-carbon-secondary bg-carbon-secondary/10 px-3 py-1.5 rounded">
+-                                {t}
+-                            </span>
+-                        ))}
+-                    </div>
+-                </div>
+-            </div>
+-        </div>
++const SectionList = ({ label, title, entries }) => (
++  <div className="mb-24">
++    <header className="mb-10 flex items-baseline justify-between">
++      <div>
++        <span className="eyebrow">{label}</span>
++        <h2 className="mt-2 text-3xl md:text-4xl font-serif italic font-normal text-ink-900 tracking-tightish">
++          {title}
++        </h2>
++      </div>
++      <span className="font-mono text-xs text-ink-600 hidden md:block">
++        ({entries.length})
++      </span>
++    </header>
++
++    <div className="border-t border-ink-300/60">
++      {entries.map((e, i) => (
++        <Row key={`${e.company}-${e.role}-${i}`} entry={e} />
++      ))}
+     </div>
++  </div>
+ );
+ 
+ const ExperienceFeed = () => {
+-    return (
+-        <section className="py-12 md:py-24 px-4 md:px-6 max-w-7xl mx-auto relative">
+-
+-            {/* 0. EDUCATION HEADER */}
+-            <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-12 flex items-center gap-2 md:gap-4">
+-                <span className="text-carbon-primary">#</span> EDUCATION
+-            </h2>
+-
+-            {/* Render Education */}
+-            {educationData.map((exp) => (
+-                <EducationCard key={exp.id} data={exp} />
+-            ))}
+-
+-            {/* 1. PROFESSIONAL EXPERIENCE HEADER */}
+-            <h2 className="text-2xl md:text-4xl font-bold mb-8 md:mb-16 flex items-center gap-2 md:gap-4 mt-16 md:mt-32">
+-                <span className="text-carbon-primary">#</span> EXPERIENCE
+-            </h2>
+-
+-            <div className="relative space-y-10 md:space-y-20 mb-20 md:mb-40">
+-                {/* Timeline Line for Jobs */}
+-                <div className="absolute left-[7px] md:left-1/2 top-4 bottom-4 w-0.5 md:w-1 bg-gradient-to-b from-carbon-primary/50 to-transparent md:-translate-x-1/2" />
+-
+-                {workHistory.map((exp, index) => (
+-                    <FeedItem key={exp.id} data={exp} alignRight={index % 2 === 0} />
+-                ))}
+-            </div>
+-
+-            {/* 2. LEADERSHIP HEADER */}
+-            <h2 className="text-2xl md:text-4xl font-bold mb-8 md:mb-16 flex items-center gap-2 md:gap-4">
+-                <span className="text-carbon-secondary">#</span> LEADERSHIP
+-            </h2>
+-
+-            <div className="relative space-y-10 md:space-y-20">
+-                {/* Timeline Line for Leadership */}
+-                <div className="absolute left-[7px] md:left-1/2 top-4 bottom-4 w-0.5 md:w-1 bg-gradient-to-b from-carbon-secondary/50 to-transparent md:-translate-x-1/2" />
+-
+-                {leadershipHistory.map((exp, index) => (
+-                    <FeedItem key={exp.id} data={exp} alignRight={index % 2 === 0} />
+-                ))}
+-            </div>
+-
+-        </section>
+-    );
++  return (
++    <div className="px-6 py-28 md:py-36">
++      <div className="max-w-5xl mx-auto">
++        <SectionList label="Experience"  title="Work"        entries={WORK} />
++        <SectionList label="Community"   title="Leadership"  entries={LEADERSHIP} />
++        <SectionList label="Study"       title="Education"   entries={EDUCATION} />
++      </div>
++    </div>
++  );
+ };
+ 
+-export default ExperienceFeed;
+\ No newline at end of file
++export default ExperienceFeed;
+diff --git a/carbon-calendar/src/components/Hero.jsx b/carbon-calendar/src/components/Hero.jsx
+index 8156c4b..1409a67 100644
+--- a/carbon-calendar/src/components/Hero.jsx
++++ b/carbon-calendar/src/components/Hero.jsx
+@@ -1,84 +1,71 @@
+-import { motion } from 'framer-motion';
+-import { TypeAnimation } from 'react-type-animation';
++import { ArrowUpRight } from 'lucide-react';
+ 
+-const Hero = () => {
++const Hero = ({ onOpenBooking }) => {
+   return (
+-    <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden text-center px-6">
+-      
+-      {/* Background Aura */}
+-      <div className="absolute inset-0 z-0">
+-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-carbon-primary/20 rounded-full blur-[120px]" />
+-      </div>
+-
+-      {/* Main Content */}
+-      <div className="relative z-10 max-w-5xl space-y-8">
+-        
+-        {/* System Status */}
+-        <motion.div 
+-          initial={{ opacity: 0, y: -20 }}
+-          animate={{ opacity: 1, y: 0 }}
+-          transition={{ duration: 0.8 }}
+-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-carbon-primary/30 bg-carbon-primary/5 text-carbon-primary text-xs font-mono tracking-[0.2em]"
+-        >
+-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+-          SYSTEM ONLINE: BRISBANE, QLD
+-        </motion.div>
+-        
+-        {/* Name */}
+-        <motion.h1 
+-          initial={{ opacity: 0, scale: 0.9 }}
+-          animate={{ opacity: 1, scale: 1 }}
+-          className="text-6xl md:text-8xl font-black tracking-tighter text-white"
+-        >
+-          ZAIN <span className="text-transparent bg-clip-text bg-gradient-to-r from-carbon-primary to-carbon-secondary">AL-SAFFI</span>
+-        </motion.h1>
++    <section className="relative min-h-screen flex items-center px-6 pt-32 pb-24">
++      <div className="max-w-5xl mx-auto w-full">
+ 
+-        {/* Animation: Slower and Specific Titles */}
+-        <div className="text-xl md:text-3xl text-carbon-muted font-medium h-10">
+-           <span>I am a </span>
+-           <span className="text-carbon-secondary">
+-             <TypeAnimation
+-               sequence={[
+-                 'Quantitative Researcher', 2000,
+-                 'Software Engineer', 2000,
+-                 'Machine Learning Engineer', 2000,
+-                 'Data Scientist', 2000,
+-                 'Student', 2000, 
+-               ]}
+-               wrapper="span"
+-               speed={63}          // Lower = Slower typing
+-               deletionSpeed={70}  // Lower = Slower deleting
+-               repeat={Infinity}
+-               cursor={true}
+-             />
+-           </span>
++        {/* Eyebrow */}
++        <div className="flex items-center gap-3 mb-10">
++          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
++          <span className="eyebrow">Brisbane, AU · Available Apr&nbsp;2026 →</span>
+         </div>
+ 
+-        <motion.p 
+-            initial={{ opacity: 0 }}
+-            animate={{ opacity: 1 }}
+-            transition={{ delay: 0.5 }}
+-            className="text-lg text-carbon-muted max-w-2xl mx-auto leading-relaxed font-mono tracking-wide"
+-        >
+-            <span className="text-white hover:text-carbon-primary transition-colors">QUANT FINANCE</span>
+-            <span className="mx-3 text-carbon-primary">|</span>
+-            <span className="text-white hover:text-carbon-primary transition-colors">DEEP LEARNING</span>
+-            <span className="mx-3 text-carbon-primary">|</span>
+-            <span className="text-white hover:text-carbon-primary transition-colors">SOFTWARE ENGINEERING</span>
+-        </motion.p>
++        {/* Name + intro — editorial, mixed serif/sans */}
++        <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.02] tracking-tighter2 text-ink-900 max-w-4xl">
++          <span className="font-serif italic font-normal text-ink-900">Zain</span>{' '}
++          <span className="font-sans font-medium">Al-Saffi.</span>
++          <br />
++          <span className="text-ink-700 font-sans font-light">
++            Quant &amp; software engineer building<br className="hidden md:block" /> systems that&nbsp;
++            <span className="font-serif italic text-accent">think</span> in markets&nbsp;and&nbsp;data.
++          </span>
++        </h1>
+ 
++        {/* One-paragraph intro */}
++        <p className="mt-12 max-w-reading text-lg text-ink-700 leading-relaxed">
++          Engineering &amp; software student at the University of Queensland — heading to{' '}
++          <span className="text-ink-900">Optiver</span> as a Quantitative Researcher,
++          and currently growth-engineering at{' '}
++          <span className="text-ink-900">Eucalyptus</span>.
++          I like difficult problems with real numbers attached.
++        </p>
++
++        {/* Quick CTAs */}
++        <div className="mt-12 flex flex-wrap items-center gap-4">
++          <button
++            onClick={onOpenBooking}
++            className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-ink-900 text-ink-0 text-sm font-medium hover:bg-accent transition-colors"
++          >
++            Book a chat
++            <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
++          </button>
++          <a
++            href="#work"
++            className="text-sm text-ink-700 hover:text-ink-900 transition-colors border-b border-ink-400/60 hover:border-accent pb-0.5"
++          >
++            See the work
++          </a>
++        </div>
++
++        {/* Quiet facts row */}
++        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-8 max-w-3xl">
++          <Fact label="GPA" value="7.00 / 7.00" sub="Dean's Excellence 2025" />
++          <Fact label="Next stop" value="Optiver" sub="Quant Research · Dec 2026" />
++          <Fact label="Society" value="UQCS" sub="President 2026" />
++          <Fact label="Built" value="1,000+ DL" sub="BlackBoxLabs · VSCode" />
++        </div>
+       </div>
+-      
+-      {/* Scroll Indicator */}
+-      <motion.div 
+-        animate={{ y: [0, 10, 0] }}
+-        transition={{ duration: 1.5, repeat: Infinity }}
+-        className="absolute bottom-10 text-carbon-muted text-sm tracking-widest uppercase"
+-      >
+-        Scroll for Logs
+-      </motion.div>
+     </section>
+   );
+ };
+ 
+-export default Hero;
+\ No newline at end of file
++const Fact = ({ label, value, sub }) => (
++  <div>
++    <div className="eyebrow mb-2">{label}</div>
++    <div className="text-ink-900 text-xl tracking-tightish">{value}</div>
++    <div className="text-ink-600 text-xs mt-0.5">{sub}</div>
++  </div>
++);
++
++export default Hero;
+diff --git a/carbon-calendar/src/components/Navbar.jsx b/carbon-calendar/src/components/Navbar.jsx
+index 29b69b1..5a13500 100644
+--- a/carbon-calendar/src/components/Navbar.jsx
++++ b/carbon-calendar/src/components/Navbar.jsx
+@@ -1,70 +1,68 @@
+-import React from 'react';
+-import { Terminal, Calendar, User, Code, Linkedin } from 'lucide-react';
++import { useEffect, useState } from 'react';
++
++const NAV_LINKS = [
++  { href: '#work',     label: 'Work' },
++  { href: '#projects', label: 'Projects' },
++  { href: '#about',    label: 'About' },
++  { href: '#contact',  label: 'Contact' },
++];
+ 
+ const Navbar = ({ onOpenBooking }) => {
+-    
+-    const scrollToTop = () => {
+-        window.scrollTo({ top: 0, behavior: 'smooth' });
+-    };
++  const [scrolled, setScrolled] = useState(false);
+ 
+-    return (
+-        <nav className="fixed top-0 left-0 w-full z-50 border-b border-white/10 bg-carbon-bg/80 backdrop-blur-md">
+-            <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
++  useEffect(() => {
++    const onScroll = () => setScrolled(window.scrollY > 24);
++    window.addEventListener('scroll', onScroll, { passive: true });
++    return () => window.removeEventListener('scroll', onScroll);
++  }, []);
+ 
+-                {/* Logo Area */}
+-                <button 
+-                    onClick={scrollToTop} 
+-                    className="flex items-center gap-2 group cursor-pointer focus:outline-none"
+-                >
+-                    <div className="p-1 rounded group-hover:bg-carbon-primary/10 transition-colors">
+-                        <Terminal className="text-carbon-primary w-6 h-6 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.5)] transition-all" />
+-                    </div>
+-                </button>
++  return (
++    <nav
++      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
++        scrolled
++          ? 'border-b border-ink-300/60 bg-ink-0/80 backdrop-blur-md'
++          : 'border-b border-transparent bg-transparent'
++      }`}
++    >
++      <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
++        {/* Mark */}
++        <a
++          href="#home"
++          onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
++          className="font-serif italic text-xl text-ink-900 hover:text-accent transition-colors"
++        >
++          Zain Al-Saffi
++        </a>
+ 
+-                {/* --- DESKTOP MENU (Hidden on Mobile) --- */}
+-                <div className="hidden md:flex items-center gap-8">
+-                    <a href="#projects" className="flex items-center gap-2 text-carbon-text/70 hover:text-carbon-primary transition-colors text-sm font-medium tracking-wide">
+-                        <Code size={18} />
+-                        <span>PROJECTS</span>
+-                    </a>
+-                    <a href="#about" className="flex items-center gap-2 text-carbon-text/70 hover:text-carbon-primary transition-colors text-sm font-medium tracking-wide">
+-                        <User size={18} />
+-                        <span>ABOUT</span>
+-                    </a>
+-                    <a href="#contact" className="flex items-center gap-2 text-carbon-text/70 hover:text-[#0A66C2] transition-colors text-sm font-medium tracking-wide">
+-                        <Linkedin size={18} />
+-                        <span>CONTACT</span>
+-                    </a>
+-                    
+-                    <button 
+-                        onClick={onOpenBooking}
+-                        className="flex items-center gap-2 bg-carbon-primary/10 border border-carbon-primary/50 px-4 py-2 rounded text-carbon-primary font-bold text-sm hover:bg-carbon-primary hover:text-black transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+-                        <Calendar size={16} />
+-                        <span>BOOK AN APPOINTMENT</span>
+-                    </button>
+-                </div>
++        {/* Desktop links */}
++        <div className="hidden md:flex items-center gap-8">
++          {NAV_LINKS.map((l) => (
++            <a
++              key={l.href}
++              href={l.href}
++              className="text-sm text-ink-700 hover:text-ink-900 transition-colors"
++            >
++              {l.label}
++            </a>
++          ))}
++          <button
++            onClick={onOpenBooking}
++            className="text-sm px-3.5 py-1.5 rounded-full border border-ink-400/70 text-ink-900 hover:border-accent hover:text-accent transition-colors"
++          >
++            Book a chat
++          </button>
++        </div>
+ 
+-                {/* --- MOBILE MENU BUTTON (Visible ONLY on Mobile) --- */}
+-                <div className="flex md:hidden items-center gap-2">
+-                    {/* Contact Link for Mobile */}
+-                    <a 
+-                        href="#contact"
+-                        className="p-2 rounded border border-[#0A66C2]/30 text-[#0A66C2] hover:bg-[#0A66C2]/20 transition-all"
+-                    >
+-                        <Linkedin size={18} />
+-                    </a>
+-                    {/* Compact Booking Button for Mobile */}
+-                    <button 
+-                        onClick={onOpenBooking}
+-                        className="flex items-center gap-2 bg-carbon-primary/20 border border-carbon-primary/50 px-3 py-2 rounded text-carbon-primary text-xs font-bold hover:bg-carbon-primary hover:text-black transition-all">
+-                        <Calendar size={16} />
+-                        <span>BOOK</span>
+-                    </button>
+-                </div>
++        {/* Mobile — single CTA */}
++        <button
++          onClick={onOpenBooking}
++          className="md:hidden text-xs px-3 py-1.5 rounded-full border border-ink-400/70 text-ink-900 hover:border-accent hover:text-accent transition-colors"
++        >
++          Book
++        </button>
++      </div>
++    </nav>
++  );
++};
+ 
+-            </div>
+-        </nav>
+-    )
+-}
+-  
+-export default Navbar;
+\ No newline at end of file
++export default Navbar;
+diff --git a/carbon-calendar/src/components/Projects.jsx b/carbon-calendar/src/components/Projects.jsx
+index 5d687f2..0d13ddb 100644
+--- a/carbon-calendar/src/components/Projects.jsx
++++ b/carbon-calendar/src/components/Projects.jsx
+@@ -1,202 +1,147 @@
+-import { motion } from 'framer-motion';
+-import { Github, ExternalLink, Youtube, Trophy, Activity } from 'lucide-react';
++import { Github, Youtube, ArrowUpRight } from 'lucide-react';
+ 
+-const projects = [
++const PROJECTS = [
+   {
+-    id: "imc",
+-    title: "IMC Prosperity 3",
+-    role: "Algorithmic Trading Competition",
+-    date: "April 2025",
+-    // Note: In Vite, '/public' is the root. So use '/logos/...' not '/public/logos/...'
+-    image: "/logos/prosperity.JPG", 
+-    logo: "/logos/imc.png",
+-    tech: ["Python", "Pandas", "Scikit-Learn", "Black-Scholes"],
+-    stats: "rank: 60th Global / 9th AU",
+-    description: "Built statistical arbitrage strategies using cointegration and Ornstein-Uhlenbeck modelling. Engineered a real-time Python visualiser for P&L monitoring. Placed 1st in Queensland, 9th Australia and 60th Worldwide in the Algorithm Category",
++    id: 'imc',
++    title: 'IMC Prosperity 3',
++    blurb:
++      'Statistical-arb strategies on top of cointegration and Ornstein–Uhlenbeck modelling with Black–Scholes pricing and IV-curve fitting — mean-reversion, basket and options trades, with a Python visualiser for stationarity checks and live P&L.',
++    headline: '9th in Australia · 60th globally (15k teams)',
++    date: 'Apr 2025',
++    tech: ['Python', 'pandas', 'scikit-learn', 'Black–Scholes'],
+     links: {
+-      github: "https://github.com/ZainAlSaffi-Dev/imc-prosperity3",
+-      // Specific YouTube Logic
+-      youtube: "https://www.youtube.com/watch?v=D9cbJJ3oKr4" 
++      github: 'https://github.com/ZainAlSaffi-Dev/imc-prosperity3',
++      youtube: 'https://www.youtube.com/watch?v=D9cbJJ3oKr4',
+     },
+-    accent: "from-blue-500 to-cyan-500"
+   },
+   {
+-    id: "blackbox",
+-    title: "AI Code Detection",
+-    role: "Machine Learning",
+-    date: "Sept 2025",
+-    image: "/logos/blackboxlabs.JPG", 
+-    logo: "/logos/bbxlogo.jpg",
+-    tech: ["CodeGPTSensor+", "PyTorch", "Redis", "Docker"], // Updated Tech Stack
+-    stats: "accuracy: 98.98% (ROC-AUC 0.99)",
+-    description: "Retrofitted a contrastive learning CodeGPTSensor+ model to detect AI-generated code, utilizing MIST adversarial augmentation to achieve 98.98% accuracy. Deployed as a GitHub App via an INT8-quantized TorchScript inference service for real-time, CPU-efficient PR scanning.",
++    id: 'blackbox',
++    title: 'BlackBoxLabs',
++    blurb:
++      'A RoBERTa-base binary classifier trained on 239k Python pairs using contrastive regularisation and MIST adversarial augmentation, fine-tuned with cross-entropy + consistency penalties to harden against identifier renames and structural edits. Shipped as a CPU-only GitHub App.',
++    headline: '98.98% acc · 0.9993 ROC-AUC · 1,000+ DL',
++    date: 'Sep 2025',
++    tech: ['PyTorch', 'TorchScript INT8', 'GitHub App', 'Nginx / Redis'],
+     links: {
+-      github: "https://github.com/BlackBox-Labs-TM"
++      github: 'https://github.com/BlackBox-Labs-TM',
+     },
+-    accent: "from-purple-500 to-pink-500"
+   },
+   {
+-    id: "valostats",
+-    title: "ValoStats",
+-    role: "Full Stack Data App",
+-    date: "Aug 2024",
+-    image: "/logos/hackathon.JPG",
+-    logo: "/logos/riot.png",
+-    position: 'object-top',
+-    tech: ["Streamlit", "Gradient Boosting", "Riot API", "Scikit-Learn"],
+-    stats: "award: People's Choice (UQCS)",
+-    description: "Led a 6-person engineering team to build a predictive analytics engine for Valorant Champions 2025. Orchestrated real-time telemetry ingestion via the Riot Games API to feed a Gradient Boosting ensemble model, achieving 90% prediction accuracy. Voted People's Choice Award and won $500",
++    id: 'valostats',
++    title: 'ValoStats',
++    blurb:
++      'Led a 6-person build using Streamlit and the RIOT API to integrate real-time match data; feature engineering with Gradient Boosting + Logistic Regression predicted outcomes at 90% accuracy.',
++    headline: 'People’s Choice — UQCS Hackathon',
++    date: 'Aug 2024',
++    tech: ['Streamlit', 'Gradient Boosting', 'Riot API'],
+     links: {
+-      github: "https://github.com/XLeling727/Valostats"
++      github: 'https://github.com/XLeling727/Valostats',
+     },
+-    accent: "from-red-500 to-orange-500"
+   },
+   {
+-    id: "skindetect",
+-    title: "SkinDetect",
+-    role: "Computer Vision",
+-    date: "Sept 2024",
+-    image: "/logos/skin.png", 
+-    logo: "/logos/pytorch.png",
+-    position: 'object-top', 
+-    tech: ["ResNet-50", "Siamese Network", "Triplet Loss"],
+-    stats: "accuracy: 90% (ISIC-2020)",
+-    description: "Designed a Siamese network with ResNet-50 backbone to classify melanoma lesions, validated with t-SNE for robust generalisation.",
++    id: 'algojam',
++    title: 'AlgoJam',
++    blurb:
++      'Pairs trading and ARIMA time-series analysis in a team of three to identify mispricings across simulated markets.',
++    headline: '3rd place · IMC-sponsored',
++    date: 'Sep 2024',
++    tech: ['Python', 'ARIMA', 'Pairs Trading'],
++    links: {},
++  },
++  {
++    id: 'skindetect',
++    title: 'SkinDetect',
++    blurb:
++      'Siamese network (ResNet-50 backbone, triplet loss) with oversampling and balanced batches to classify melanoma lesions from the ISIC-2020 dataset; validated with AUC-ROC and t-SNE.',
++    headline: '90% accuracy on ISIC-2020',
++    date: 'Sep 2024',
++    tech: ['PyTorch', 'ResNet-50', 'Siamese'],
+     links: {
+-      github: "https://github.com/ZainAlSaffi-Dev/PatternAnalysis-2024/tree/topic-recognition/recognition/Siamese-48008361"
++      github:
++        'https://github.com/ZainAlSaffi-Dev/PatternAnalysis-2024/tree/topic-recognition/recognition/Siamese-48008361',
+     },
+-    accent: "from-green-500 to-emerald-500"
+-  }
++  },
+ ];
+ 
+-const ProjectCard = ({ project, index }) => {
+-  return (
+-    <motion.div 
+-      initial={{ opacity: 0, y: 50 }}
+-      whileInView={{ opacity: 1, y: 0 }}
+-      transition={{ duration: 0.5, delay: index * 0.1 }}
+-      viewport={{ once: true }}
+-      className="group relative w-full bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all duration-500 flex flex-col"
+-    >
+-      {/* 1. Image Area with Overlay */}
+-      <div className="relative h-48 w-full overflow-hidden shrink-0">
+-        <div className={`absolute inset-0 bg-gradient-to-t ${project.accent} opacity-20 group-hover:opacity-10 transition-opacity z-10`} />
+-        
+-        {/* Placeholder for actual image */}
+-        <div className="absolute inset-0 bg-black/50 z-0 flex items-center justify-center text-gray-700 font-mono text-xs">
+-            [IMG: {project.id}]
+-        </div>
+-        
+-        <img 
+-            src={project.image} 
+-            alt={project.title}
+-            className={`w-full h-full object-cover grayscale group-hover:grayscale-0 scale-100 group-hover:scale-110 transition-all duration-700 ease-out opacity-60 group-hover:opacity-100 ${project.position || 'object-center'}`}
+-            onError={(e) => e.target.style.display = 'none'} 
+-        />
+-        {/* Note: Floating logo removed from here */}
+-      </div>
+-
+-      {/* 2. Content Area */}
+-      <div className="p-6 relative z-20 bg-[#0a0a0a] flex flex-col flex-1">
+-        
+-        {/* NEW HEADER: Date + Logo (Matching ExperienceFeed) */}
+-        <div className="flex justify-between items-center mb-4">
+-             <span className="text-[10px] font-bold font-mono text-carbon-primary border border-carbon-primary/30 px-2 py-1 rounded bg-carbon-primary/5 uppercase tracking-wider">
+-                {project.date}
+-             </span>
+-             
+-             {/* THE LOGO: Greyscale -> Color on Hover */}
+-             <img 
+-                src={project.logo} 
+-                alt="logo" 
+-                className="h-8 w-auto object-contain grayscale brightness-200 opacity-50 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 transition-all duration-500"
+-                onError={(e) => e.target.style.display = 'none'} 
+-             />
+-        </div>
+-
+-        {/* Title & Role */}
+-        <div className="mb-4">
+-            <h3 className="text-2xl font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all mb-1">
+-                {project.title}
+-            </h3>
+-            <div className="flex items-center gap-2">
+-                <p className="text-sm text-carbon-primary font-mono">{project.role}</p>
+-                {/* Stats Badge */}
+-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
+-                    <Activity size={10} />
+-                    {project.stats}
+-                </div>
+-            </div>
+-        </div>
++const ProjectRow = ({ p }) => (
++  <article className="grid md:grid-cols-12 gap-4 md:gap-8 py-10 border-b border-ink-300/60 group">
++    {/* Date / number column */}
++    <div className="md:col-span-3">
++      <div className="font-mono text-[11px] uppercase tracking-widest text-ink-600">{p.date}</div>
++      <div className="mt-1 text-ink-700 text-sm">{p.headline}</div>
++    </div>
+ 
+-        <p className="text-gray-400 text-sm leading-relaxed mb-6">
+-            {project.description}
+-        </p>
++    {/* Content */}
++    <div className="md:col-span-9">
++      <h3 className="text-2xl md:text-3xl text-ink-900 tracking-tightish leading-tight">
++        <span className="font-medium">{p.title}</span>
++      </h3>
++      <p className="mt-4 text-ink-800 text-[15px] leading-relaxed max-w-reading">{p.blurb}</p>
+ 
+-        {/* Footer: Tech Stack + Links (Pushed to bottom) */}
+-        <div className="mt-auto">
+-            {/* Tech Stack Chips */}
+-            <div className="flex flex-wrap gap-2 mb-6">
+-                {project.tech.map(t => (
+-                    <span key={t} className="text-xs font-medium text-gray-300 bg-white/5 border border-white/5 px-2 py-1 rounded group-hover:border-white/20 transition-colors">
+-                        {t}
+-                    </span>
+-                ))}
+-            </div>
+-
+-            {/* Action Bar */}
+-            <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+-                <a 
+-                    href={project.links.github} 
+-                    target="_blank" 
+-                    rel="noreferrer"
+-                    className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-white transition-colors"
+-                >
+-                    <Github size={16} /> Code
+-                </a>
+-                
+-                {project.links.youtube && (
+-                    <a 
+-                        href={project.links.youtube} 
+-                        target="_blank" 
+-                        rel="noreferrer"
+-                        className="flex items-center gap-2 text-sm font-bold text-red-400 hover:text-red-300 transition-colors ml-auto"
+-                    >
+-                        <Youtube size={16} /> Demo
+-                    </a>
+-                )}
++      <div className="mt-5 flex flex-wrap gap-2">
++        {p.tech.map((t) => (
++          <span
++            key={t}
++            className="text-xs font-mono text-ink-700 px-2 py-1 border border-ink-300/70 rounded-full"
++          >
++            {t}
++          </span>
++        ))}
++      </div>
+ 
+-                {!project.links.youtube && (
+-                     <button className="flex items-center gap-2 text-sm font-bold text-gray-600 cursor-not-allowed ml-auto">
+-                        <ExternalLink size={16} /> Live
+-                     </button>
+-                )}
+-            </div>
++      {(p.links.github || p.links.youtube) && (
++        <div className="mt-5 flex items-center gap-5 text-sm">
++          {p.links.github && (
++            <a
++              href={p.links.github}
++              target="_blank"
++              rel="noreferrer"
++              className="inline-flex items-center gap-2 text-ink-700 hover:text-accent transition-colors"
++            >
++              <Github size={14} /> Source
++              <ArrowUpRight size={12} className="opacity-60" />
++            </a>
++          )}
++          {p.links.youtube && (
++            <a
++              href={p.links.youtube}
++              target="_blank"
++              rel="noreferrer"
++              className="inline-flex items-center gap-2 text-ink-700 hover:text-accent transition-colors"
++            >
++              <Youtube size={14} /> Demo
++              <ArrowUpRight size={12} className="opacity-60" />
++            </a>
++          )}
+         </div>
+-      </div>
+-    </motion.div>
+-  );
+-};
++      )}
++    </div>
++  </article>
++);
+ 
+ const Projects = () => {
+   return (
+-    <section id="projects" className="py-32 px-6 max-w-7xl mx-auto">
+-      <div className="mb-16">
+-        <h2 className="text-4xl md:text-6xl font-black text-white mb-4 flex items-center gap-4">
+-            <Trophy className="text-carbon-primary" size={40} />
+-            PROJECTS
+-        </h2>
+-        <p className="text-xl text-gray-400 max-w-2xl font-mono">
+-            /root/research
+-        </p>
+-      </div>
++    <div className="px-6 py-28 md:py-36">
++      <div className="max-w-5xl mx-auto">
++        <header className="mb-10 flex items-baseline justify-between">
++          <div>
++            <span className="eyebrow">Selected work</span>
++            <h2 className="mt-2 text-3xl md:text-4xl font-serif italic font-normal text-ink-900 tracking-tightish">
++              Projects.
++            </h2>
++          </div>
++          <span className="font-mono text-xs text-ink-600 hidden md:block">
++            ({PROJECTS.length})
++          </span>
++        </header>
+ 
+-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+-        {projects.map((p, i) => (
+-            <ProjectCard key={p.id} project={p} index={i} />
+-        ))}
++        <div className="border-t border-ink-300/60">
++          {PROJECTS.map((p) => (
++            <ProjectRow key={p.id} p={p} />
++          ))}
++        </div>
+       </div>
+-    </section>
++    </div>
+   );
+ };
+ 
+diff --git a/carbon-calendar/src/components/TerminalGate.jsx b/carbon-calendar/src/components/TerminalGate.jsx
+index ed140cd..55483fb 100644
+--- a/carbon-calendar/src/components/TerminalGate.jsx
++++ b/carbon-calendar/src/components/TerminalGate.jsx
+@@ -1,107 +1,6 @@
+-import { useState, useEffect, useRef } from 'react';
+-import { motion, useInView } from 'framer-motion';
+-import { TypeAnimation } from 'react-type-animation';
+-
+-const TerminalGate = ({ onUnlock }) => {
+-  const containerRef = useRef(null);
+-  const isInView = useInView(containerRef, { amount: 0.5, once: true });
+-  const [status, setStatus] = useState('waiting'); // waiting -> locked -> typing -> success -> unlocked
+-
+-  useEffect(() => {
+-    if (isInView && status === 'waiting') {
+-      // 1. Lock Scroll
+-      document.body.style.overflow = 'hidden';
+-      setStatus('locked');
+-      
+-      // 2. Start Typing after brief pause
+-      setTimeout(() => setStatus('typing'), 500);
+-    }
+-  }, [isInView, status]);
+-
+-  const handleSequenceComplete = () => {
+-    setStatus('success');
+-    
+-    // 3. Unlock after "Access Granted" message
+-    setTimeout(() => {
+-      document.body.style.overflow = 'auto';
+-      setStatus('unlocked');
+-      onUnlock(); // <--- This triggers the About Section reveal
+-    }, 1500);
+-  };
+-
+-  return (
+-    <section ref={containerRef} className="py-24 bg-black flex flex-col items-center justify-center relative z-20">
+-       
+-       <motion.div 
+-         initial={{ opacity: 0, scale: 0.9 }}
+-         animate={isInView ? { opacity: 1, scale: 1 } : {}}
+-         transition={{ duration: 0.5 }}
+-         className="w-full max-w-2xl px-6"
+-       >
+-          <div className="bg-[#0c0c0c] border border-white/10 rounded-lg overflow-hidden shadow-2xl font-mono text-sm relative">
+-             
+-             {/* Terminal Header */}
+-             <div className="bg-white/5 p-3 flex items-center gap-2 border-b border-white/5">
+-                <div className="flex gap-2">
+-                   <div className="w-3 h-3 rounded-full bg-red-500/50" />
+-                   <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+-                   <div className="w-3 h-3 rounded-full bg-green-500/50" />
+-                </div>
+-                <div className="ml-auto text-xs text-gray-500 opacity-50">zsh — admin@carbon</div>
+-             </div>
+-
+-             {/* Terminal Body */}
+-             <div className="p-6 h-40 flex flex-col justify-center">
+-                <div className="flex flex-col gap-2">
+-                   
+-                   {/* Line 1: The Command */}
+-                   {(status === 'typing' || status === 'success' || status === 'unlocked') && (
+-                     <div className="flex items-center gap-3 text-gray-300">
+-                        <span className="text-green-400 font-bold">➜</span>
+-                        <span className="text-blue-400 font-bold">~</span>
+-                        <TypeAnimation
+-                           sequence={[
+-                              'whois zain_al_saffi',
+-                              800, 
+-                              () => handleSequenceComplete()
+-                           ]}
+-                           wrapper="span"
+-                           cursor={false}
+-                           speed={60}
+-                           className="text-white font-bold"
+-                        />
+-                     </div>
+-                   )}
+-
+-                   {/* Line 2: The Success Message */}
+-                   {(status === 'success' || status === 'unlocked') && (
+-                     <motion.div 
+-                        initial={{ opacity: 0 }}
+-                        animate={{ opacity: 1 }}
+-                        className="text-green-500 mt-2 font-bold"
+-                     >
+-                        {'>'} IDENTITY VERIFIED. LOADING PROFILE...
+-                     </motion.div>
+-                   )}
+-
+-                   {/* Blinking Cursor (When waiting) */}
+-                   {status === 'waiting' && (
+-                     <div className="flex items-center gap-3">
+-                        <span className="text-green-400 font-bold">➜</span>
+-                        <span className="text-blue-400 font-bold">~</span>
+-                        <span className="w-2 h-5 bg-white animate-pulse" />
+-                     </div>
+-                   )}
+-                </div>
+-             </div>
+-          </div>
+-
+-          <p className="text-center text-gray-600 text-xs mt-6 tracking-widest uppercase animate-pulse">
+-             {status === 'unlocked' ? "Scroll Down" : "System Processing..."}
+-          </p>
+-       </motion.div>
+-    </section>
+-  );
+-};
+-
+-export default TerminalGate;
+\ No newline at end of file
++// Deprecated — replaced by the new About section in v2 of the site.
++// Left in place because the workspace doesn't allow file deletion.
++// Nothing imports this; Vite will tree-shake it out of the bundle.
++export default function TerminalGate() {
++  return null;
++}
+diff --git a/carbon-calendar/src/index.css b/carbon-calendar/src/index.css
+index ec9b16b..23cddcd 100644
+--- a/carbon-calendar/src/index.css
++++ b/carbon-calendar/src/index.css
+@@ -2,9 +2,17 @@
+ @tailwind components;
+ @tailwind utilities;
+ 
++/* ── Editorial / Linear-inspired warm-dark base ─────────────────────────── */
++
++@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap');
++
+ :root {
+-  background-color: #111111; /* carbon-bg */
+-  color: #E0E0E0; /* carbon-text */
++  --bg:       #0E0D0C;
++  --surface:  #1A1816;
++  --border:   #2A2724;
++  --text:     #EDE6D7;
++  --muted:    #9A9285;
++  --accent:   #C9A36C;
+ }
+ 
+ html, body {
+@@ -12,6 +20,18 @@ html, body {
+   max-width: 100%;
+   overflow-x: hidden;
+   overscroll-behavior-x: none;
++  background-color: var(--bg);
++  color: var(--text);
++}
++
++body {
++  margin: 0;
++  font-family: 'Inter', system-ui, -apple-system, sans-serif;
++  font-size: 16px;
++  line-height: 1.6;
++  -webkit-font-smoothing: antialiased;
++  -moz-osx-font-smoothing: grayscale;
++  font-feature-settings: "ss01", "cv11";
+ }
+ 
+ #root {
+@@ -20,23 +40,76 @@ html, body {
+   overflow-x: hidden;
+ }
+ 
+-body {
+-  margin: 0;
+-  font-family: 'Inter', sans-serif;
+-  -webkit-font-smoothing: antialiased;
++/* Subtle grain overlay — gives the background a tactile, non-digital feel */
++body::before {
++  content: '';
++  position: fixed;
++  inset: 0;
++  pointer-events: none;
++  z-index: 1;
++  opacity: 0.035;
++  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
++  mix-blend-mode: overlay;
++}
++
++/* Selection */
++::selection {
++  background: rgba(201, 163, 108, 0.25);
++  color: #fff;
+ }
+ 
+-/* Custom Scrollbar to match the theme */
++/* Scrollbar — quiet, warm */
+ ::-webkit-scrollbar {
+-  width: 8px;
++  width: 10px;
++  height: 10px;
+ }
+ ::-webkit-scrollbar-track {
+-  background: #111111; 
++  background: var(--bg);
+ }
+ ::-webkit-scrollbar-thumb {
+-  background: #333; 
+-  border-radius: 4px;
++  background: #2A2724;
++  border-radius: 8px;
++  border: 2px solid var(--bg);
+ }
+ ::-webkit-scrollbar-thumb:hover {
+-  background: #00FFFF; /* Neon Cyan on hover */
+-}
+\ No newline at end of file
++  background: #3A352F;
++}
++
++.custom-scrollbar::-webkit-scrollbar { width: 6px; }
++.custom-scrollbar::-webkit-scrollbar-thumb {
++  background: #3A352F;
++  border-radius: 6px;
++  border: none;
++}
++
++/* Underline animation used for inline links */
++.link {
++  position: relative;
++  display: inline-block;
++  color: var(--text);
++  text-decoration: none;
++  padding-bottom: 1px;
++  border-bottom: 1px solid rgba(201, 163, 108, 0.4);
++  transition: border-color 200ms ease, color 200ms ease;
++}
++.link:hover {
++  color: var(--accent);
++  border-bottom-color: var(--accent);
++}
++
++/* Tiny eyebrow label used above section blocks */
++.eyebrow {
++  font-family: 'JetBrains Mono', ui-monospace, monospace;
++  font-size: 11px;
++  letter-spacing: 0.18em;
++  text-transform: uppercase;
++  color: var(--muted);
++}
++
++/* Reduce motion safely */
++@media (prefers-reduced-motion: reduce) {
++  *, *::before, *::after {
++    animation-duration: 0.001ms !important;
++    transition-duration: 0.001ms !important;
++  }
++}
+diff --git a/carbon-calendar/tailwind.config.js b/carbon-calendar/tailwind.config.js
+index 0de74cc..dc264a6 100644
+--- a/carbon-calendar/tailwind.config.js
++++ b/carbon-calendar/tailwind.config.js
+@@ -7,19 +7,62 @@ export default {
+   theme: {
+     extend: {
+       colors: {
++        ink: {
++          // Warm dark backgrounds — not pure black, slight warmth like a real
++          // material. Inspired by Linear / paco.me / rauno.me.
++          0:   '#0E0D0C', // page background (warm near-black)
++          50:  '#141312', // alt page background
++          100: '#1A1816', // surface (cards, panels)
++          200: '#22201E', // raised surface
++          300: '#2A2724', // hairline border / hover surface
++          400: '#3A352F', // stronger border
++          500: '#5A544A', // deep muted
++          600: '#7A7367', // muted secondary text
++          700: '#9A9285', // muted body text
++          800: '#C8BFAF', // body text
++          900: '#EDE6D7', // headline text — warm off-white
++        },
++        accent: {
++          DEFAULT: '#C9A36C', // warm tan / muted amber — single accent
++          soft:    '#E2C39A',
++          deep:    '#A07F4F',
++        },
++        // Keep `carbon-*` aliases pointing to the new palette so that any
++        // old usages don't crash mid-build while we replace them.
+         carbon: {
+-          bg: '#050505',       // Pure Void Black (Infinite Tsukuyomi vibes)
+-          panel: '#120a1a',    // Very dark purple-grey for cards
+-          primary: '#a855f7',  // Susanoo Purple (Glowing Violet)
+-          secondary: '#e9d5ff', // Rinnegan Lavender (Pale, ghostly)
+-          text: '#f3e8ff',     // Very light purple-white
+-          muted: '#6b4c7d',    // Muted purple-grey for secondary text
+-        }
++          bg:        '#0E0D0C',
++          panel:     '#1A1816',
++          primary:   '#C9A36C',
++          secondary: '#E2C39A',
++          text:      '#EDE6D7',
++          muted:     '#7A7367',
++        },
+       },
+       fontFamily: {
+-        sans: ['Inter', 'system-ui', 'sans-serif'],
++        // Editorial serif for the name and a few accents
++        serif: ['"Instrument Serif"', 'Cambria', 'Georgia', 'serif'],
++        // Clean sans for everything else
++        sans:  ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
++        // Mono used only for tiny captions, dates, labels
++        mono:  ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
++      },
++      letterSpacing: {
++        'tightish': '-0.012em',
++        'tighter2': '-0.025em',
++      },
++      maxWidth: {
++        'reading': '62ch',
++      },
++      animation: {
++        'fade-in': 'fadeIn 0.8s ease-out forwards',
++      },
++      keyframes: {
++        fadeIn: {
++          '0%':   { opacity: 0, transform: 'translateY(6px)' },
++          '100%': { opacity: 1, transform: 'translateY(0)' },
++        },
+       },
+     },
+   },
+   plugins: [],
+-}
+\ No newline at end of file
++}
+-- 
+2.34.1
+

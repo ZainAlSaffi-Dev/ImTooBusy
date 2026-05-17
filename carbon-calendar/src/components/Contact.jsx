@@ -1,71 +1,84 @@
-import { Linkedin, ExternalLink } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowUpRight, Mail, Github, Linkedin } from 'lucide-react';
 
-// UPDATE THIS WITH YOUR LINKEDIN URL
-const LINKEDIN_URL = "https://www.linkedin.com/in/zain-al-saffi-881492250/";
+const LINKS = [
+  {
+    label: 'Email',
+    handle: 'zainalsaffi@gmail.com',
+    href: 'mailto:zainalsaffi@gmail.com',
+    icon: Mail,
+  },
+  {
+    label: 'LinkedIn',
+    handle: 'linkedin.com/zain-al-saffi',
+    href: 'https://www.linkedin.com/in/zain-al-saffi-881492250/',
+    icon: Linkedin,
+  },
+  {
+    label: 'GitHub',
+    handle: 'github.com/ZainAlSaffi-Dev',
+    href: 'https://github.com/ZainAlSaffi-Dev',
+    icon: Github,
+  },
+];
 
-const Contact = () => {
-    return (
-        <motion.section 
-            id="contact"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="py-16 md:py-24 px-4 md:px-6 max-w-7xl mx-auto"
-        >
-            {/* Section Header */}
-            <div className="mb-10 md:mb-16 text-center">
-                <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
-                    CONTACT<span className="text-carbon-primary">_ME</span>
-                </h2>
-                <div className="h-1 w-24 bg-carbon-primary mx-auto rounded-full" />
-            </div>
+const Contact = ({ onOpenBooking }) => {
+  return (
+    <div className="px-6 py-28 md:py-36">
+      <div className="max-w-5xl mx-auto">
 
-            {/* Contact Card */}
-            <div className="max-w-md mx-auto">
-                <motion.a
-                    href={LINKEDIN_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group block p-8 md:p-10 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-carbon-primary/50 transition-all duration-300 backdrop-blur-sm"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    <div className="flex flex-col items-center text-center gap-6">
-                        {/* LinkedIn Icon */}
-                        <div className="p-4 rounded-full bg-[#0A66C2]/10 border border-[#0A66C2]/30 group-hover:bg-[#0A66C2]/20 group-hover:border-[#0A66C2]/50 transition-all">
-                            <Linkedin 
-                                size={48} 
-                                className="text-[#0A66C2] group-hover:drop-shadow-[0_0_15px_rgba(10,102,194,0.5)] transition-all"
-                            />
+        <div className="grid md:grid-cols-12 gap-12">
+          <div className="md:col-span-6">
+            <span className="eyebrow">Contact</span>
+            <h2 className="mt-2 text-4xl md:text-5xl font-serif italic font-normal text-ink-900 leading-tight tracking-tighter2">
+              Say hello.
+            </h2>
+            <p className="mt-6 text-ink-800 text-lg leading-relaxed max-w-reading">
+              Happy to chat about quant research, ML, software, or any of the
+              projects on this site. Easiest way is a quick 15-minute call, but
+              email works too.
+            </p>
+
+            <button
+              onClick={onOpenBooking}
+              className="mt-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-ink-900 text-ink-0 text-sm font-medium hover:bg-accent transition-colors group"
+            >
+              Book a chat
+              <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </button>
+          </div>
+
+          <div className="md:col-span-6">
+            <ul className="border-t border-b border-ink-300/60 divide-y divide-ink-300/60">
+              {LINKS.map(({ label, handle, href, icon: Icon }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    target={href.startsWith('http') ? '_blank' : undefined}
+                    rel={href.startsWith('http') ? 'noreferrer' : undefined}
+                    className="flex items-center justify-between py-5 group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <Icon size={18} className="text-ink-600 group-hover:text-accent transition-colors" />
+                      <div>
+                        <div className="font-mono text-[11px] uppercase tracking-widest text-ink-600">
+                          {label}
                         </div>
-                        
-                        {/* Text */}
-                        <div>
-                            <h3 className="text-xl md:text-2xl font-bold text-white mb-2 group-hover:text-carbon-primary transition-colors">
-                                LinkedIn
-                            </h3>
-                            <p className="text-gray-400 text-sm md:text-base mb-4">
-                                Connect with me professionally
-                            </p>
+                        <div className="text-ink-900 group-hover:text-accent transition-colors">
+                          {handle}
                         </div>
-                        
-                        {/* Link indicator */}
-                        <div className="flex items-center gap-2 text-carbon-primary font-mono text-sm">
-                            <span>View Profile</span>
-                            <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
-                        </div>
+                      </div>
                     </div>
-                </motion.a>
-                
-                {/* Subtitle */}
-                <p className="text-center text-gray-500 text-sm mt-8 font-mono">
-                    // Feel free to reach out for opportunities, collaborations, or just to say hi!
-                </p>
-            </div>
-        </motion.section>
-    );
+                    <ArrowUpRight size={16} className="text-ink-600 group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
 };
 
 export default Contact;
