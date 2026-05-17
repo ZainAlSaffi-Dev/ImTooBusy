@@ -55,12 +55,23 @@ const WORK = [
     tags: ['Teaching', 'Deep Learning'],
   },
   {
+    company: 'University of Queensland',
+    location: 'St Lucia',
+    role: 'Future Students & Student Services Ambassador',
+    date: 'Mar 2025 — Present',
+    bullets: [
+      'Represent the university and EAIT faculty at school expos, talks and careers fairs, guiding prospective students through degree selection.',
+    ],
+    tags: ['Public Relations', 'Student Services'],
+  },
+  {
     company: 'SVPartners',
     location: 'Brisbane',
     role: 'Insolvency Law Intern',
     date: 'Feb 2026 — Mar 2026',
     bullets: [
-      'Conducted legal research into insolvency case law and ex parte procedural requirements to synthesise provisions from the Bankruptcy Act 1966 and Corporations Act 2001 and evaluate the validity of corporate documentation administered on the Insolv platform.',
+      'Applied the IRAC framework to synthesise provisions from the Bankruptcy Act 1966 and Corporations Act 2001, facilitating the adjudication of creditor claims and ensuring compliance with evidentiary requirements for statutory filings.',
+      'Conducted legal research into insolvency case law and ex parte procedural requirements to evaluate the validity of corporate documentation, managing the accurate administration of insolvent estates within the Insolv platform.',
     ],
     tags: ['Legal Research', 'Bankruptcy Act', 'Corporations Act'],
   },
@@ -84,6 +95,7 @@ const WORK = [
     bullets: [
       'Led ROS-to-ROS2 migration in Python and C++, integrating TensorRT-quantised YOLOv11 for faster, more accurate cone detection in real-time autonomous navigation.',
       'Built a Dockerised ROS2-Gazebo simulation environment enabling remote development and virtual testing, boosting testing availability by 80% and accelerating R&D deployment.',
+      'Introduced a task-ranked project management system with strategic resource planning and regular stand-ups, eliminating missed deadlines.',
     ],
     tags: ['ROS2', 'C++', 'TensorRT', 'Docker'],
   },

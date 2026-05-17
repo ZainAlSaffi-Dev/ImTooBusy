@@ -6,7 +6,7 @@ const CURRENTLY = [
   { k: 'Researching', v: 'Algorithmic governance & engagement on Meta platforms' },
   { k: 'Teaching',    v: 'COMP3710 — Pattern Recognition (UQ)' },
   { k: 'Reading',     v: '“Advances in Financial Machine Learning” — López de Prado' },
-  { k: 'Listening',   v: 'Slipknot · In Flames · low-tuned 7-string things' },
+  { k: 'Listening',   v: 'BabyMetal · In Flames · Electric Callboy · low-tuned 7-string things' },
 ];
 
 const About = () => {
@@ -26,14 +26,15 @@ const About = () => {
             <div className="mt-8 space-y-5 text-ink-800 text-lg leading-relaxed max-w-reading">
               <p>
                 I grew up wanting to understand how things actually work — markets, models, machines.
-                Most of what I do now is somewhere in that intersection: trading strategies, ML pipelines,
-                autonomous systems, the occasional NLP project that tells a research team something
-                they didn't already know.
+                Most of what I do now is somewhere in that intersection: trading strategies, ML and
+                deep-learning pipelines, autonomous systems, the occasional NLP project that tells a
+                research team something they didn't already know.
               </p>
               <p>
                 Outside the terminal I play 7-string guitar (Ibanez Prestige into a Neural DSP Gojira),
-                spend more time than is probably reasonable on niche fragrances, and have a soft spot for
-                pro bono law — the long-term plan involves bionics and Alzheimer's, but that's another
+                spend more time than is probably reasonable on niche fragrances, and have a soft spot
+                for pro bono law — there's a thrill in standing up for people who can't defend
+                themselves. The long-term plan involves bionics and Alzheimer's, but that's another
                 conversation.
               </p>
             </div>
