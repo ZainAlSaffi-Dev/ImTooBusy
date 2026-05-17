@@ -1,5 +1,5 @@
-// Editorial list of work, leadership, awards and education.
-// No timeline dots, no neon, no card chrome — just a clean tabular layout.
+import Reveal from './Reveal';
+import AnimatedCounter from './AnimatedCounter';
 
 const WORK = [
   {
@@ -134,59 +134,6 @@ const LEADERSHIP = [
   },
 ];
 
-const AWARDS = [
-  {
-    company: 'The University of Queensland',
-    location: 'St Lucia',
-    role: 'Dean’s Academic Excellence Award',
-    date: '2025',
-    bullets: [
-      'Awarded for sustained academic performance across the program — GPA 7.00 / 7.00.',
-    ],
-    tags: ['Academic'],
-  },
-  {
-    company: 'Rio Tinto',
-    location: 'Brisbane',
-    role: 'Future Leader Excellence Scholar',
-    date: '2024 — Present',
-    bullets: [
-      'Selected as a Rio Tinto Future Leader Excellence Scholar — awarded to high-performing UQ engineering students with demonstrated leadership potential.',
-    ],
-    tags: ['Scholarship'],
-  },
-  {
-    company: 'IMC Trading',
-    location: 'Global',
-    role: 'IMC Prosperity 3 — 9th AU, 60th globally',
-    date: 'Apr 2025',
-    bullets: [
-      'Top 0.4% of 15,000 teams in the algorithm category of IMC’s global trading competition.',
-    ],
-    tags: ['Competition', 'Trading'],
-  },
-  {
-    company: 'IMC Trading',
-    location: 'Online',
-    role: 'AlgoJam — 3rd place',
-    date: 'Sep 2024',
-    bullets: [
-      'Third place in IMC-sponsored AlgoJam — pairs trading and ARIMA time-series analysis across simulated markets.',
-    ],
-    tags: ['Competition'],
-  },
-  {
-    company: 'UQ Computing Society',
-    location: 'St Lucia',
-    role: 'People’s Choice — UQCS Hackathon',
-    date: 'Aug 2024',
-    bullets: [
-      'Led a 6-person team to the People’s Choice award for ValoStats — a predictive analytics engine for Valorant Champions 2025 ($500 prize).',
-    ],
-    tags: ['Hackathon'],
-  },
-];
-
 const EDUCATION = [
   {
     company: 'The University of Queensland',
@@ -200,84 +147,171 @@ const EDUCATION = [
   },
 ];
 
+// ── Big-number "trophy" cards for the Awards moment ───────────────────────
+const TROPHIES = [
+  {
+    counter: <AnimatedCounter to={9} />,
+    suffix: 'th',
+    label: 'IMC Prosperity 3 — Australia',
+    sub: 'Algorithm category · 15,000 teams',
+  },
+  {
+    counter: <AnimatedCounter to={60} />,
+    suffix: 'th',
+    label: 'IMC Prosperity 3 — Global',
+    sub: 'Top 0.4% of all teams',
+  },
+  {
+    counter: <AnimatedCounter to={98.98} decimals={2} suffix="%" />,
+    label: 'BlackBoxLabs accuracy',
+    sub: 'AI-generated code detection',
+  },
+  {
+    counter: <AnimatedCounter to={30} prefix="$" suffix="k+" />,
+    label: 'UQCS sponsorship secured',
+    sub: 'Largest in society history',
+  },
+];
+
 // ── A single row in the editorial list ────────────────────────────────────
-const Row = ({ entry }) => (
-  <article className="group grid md:grid-cols-12 gap-4 md:gap-8 py-8 border-b border-ink-300/60">
-    {/* Date column */}
-    <div className="md:col-span-3">
-      <div className="font-mono text-[11px] uppercase tracking-widest text-ink-600">
-        {entry.date}
+const Row = ({ entry, index }) => (
+  <Reveal delay={Math.min(index * 0.04, 0.2)} as="article">
+    <div className="group grid md:grid-cols-12 gap-4 md:gap-8 py-10 border-b border-ink-300/60">
+      <div className="md:col-span-3">
+        <div className="font-mono text-[11px] uppercase tracking-widest text-ink-600">
+          {entry.date}
+        </div>
+        <div className="text-ink-700 text-sm mt-1">{entry.location}</div>
       </div>
-      <div className="text-ink-700 text-sm mt-1">{entry.location}</div>
-    </div>
 
-    {/* Content column */}
-    <div className="md:col-span-9">
-      <h3 className="text-xl md:text-2xl text-ink-900 leading-snug tracking-tightish">
-        <span className="font-medium">{entry.role}</span>
-        <span className="text-ink-700 font-light"> · </span>
-        <span className="font-serif italic text-ink-800 group-hover:text-accent transition-colors">
-          {entry.company}
-        </span>
-      </h3>
-
-      {entry.bullets.length > 0 && (
-        <ul className="mt-4 space-y-3 text-ink-800 text-[15px] leading-relaxed max-w-reading">
-          {entry.bullets.map((b, i) => (
-            <li key={i} className="relative pl-4">
-              <span className="absolute left-0 top-2.5 w-1.5 h-px bg-ink-500" />
-              {b}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="mt-5 flex flex-wrap gap-2">
-        {entry.tags.map((t) => (
-          <span
-            key={t}
-            className="text-xs font-mono text-ink-700 px-2 py-1 border border-ink-300/70 rounded-full"
-          >
-            {t}
+      <div className="md:col-span-9">
+        <h3 className="text-xl md:text-2xl text-ink-900 leading-snug tracking-tightish">
+          <span className="font-medium">{entry.role}</span>
+          <span className="text-ink-700 font-light"> · </span>
+          <span className="font-serif italic text-ink-800 group-hover:text-accent transition-colors">
+            {entry.company}
           </span>
+        </h3>
+
+        {entry.bullets.length > 0 && (
+          <ul className="mt-4 space-y-3 text-ink-800 text-[15px] leading-relaxed max-w-reading">
+            {entry.bullets.map((b, i) => (
+              <li key={i} className="relative pl-4">
+                <span className="absolute left-0 top-2.5 w-1.5 h-px bg-ink-500" />
+                {b}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {entry.tags.map((t) => (
+            <span
+              key={t}
+              className="text-xs font-mono text-ink-700 px-2 py-1 border border-ink-300/70 rounded-full"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  </Reveal>
+);
+
+const SectionList = ({ id, label, title, entries }) => (
+  <div id={id} className="py-36 md:py-48 px-6">
+    <div className="max-w-6xl mx-auto">
+      <Reveal>
+        <span className="eyebrow">{label}</span>
+      </Reveal>
+      <Reveal delay={0.05}>
+        <h2 className="mt-4 text-5xl md:text-7xl lg:text-[5.5rem] font-serif italic font-normal text-ink-900 leading-[1.04] tracking-tighter2">
+          {title}
+        </h2>
+      </Reveal>
+
+      <div className="mt-14 border-t border-ink-300/60">
+        {entries.map((e, i) => (
+          <Row key={`${e.company}-${e.role}-${i}`} entry={e} index={i} />
         ))}
       </div>
     </div>
-  </article>
+  </div>
 );
 
-const SectionList = ({ label, title, entries }) => (
-  <div className="mb-24">
-    <header className="mb-10 flex items-baseline justify-between">
-      <div>
-        <span className="eyebrow">{label}</span>
-        <h2 className="mt-2 text-3xl md:text-4xl font-serif italic font-normal text-ink-900 tracking-tightish">
-          {title}
+// ── Awards = big-number scene, then the row list ──────────────────────────
+const Awards = () => (
+  <div id="awards" className="py-36 md:py-48 px-6">
+    <div className="max-w-6xl mx-auto">
+      <Reveal>
+        <span className="eyebrow">Honours</span>
+      </Reveal>
+      <Reveal delay={0.05}>
+        <h2 className="mt-4 text-5xl md:text-7xl lg:text-[5.5rem] font-serif italic font-normal text-ink-900 leading-[1.04] tracking-tighter2">
+          Scholarships &amp; Awards.
         </h2>
-      </div>
-      <span className="font-mono text-xs text-ink-600 hidden md:block">
-        ({entries.length})
-      </span>
-    </header>
+      </Reveal>
 
-    <div className="border-t border-ink-300/60">
-      {entries.map((e, i) => (
-        <Row key={`${e.company}-${e.role}-${i}`} entry={e} />
-      ))}
+      {/* Big-number trophy grid */}
+      <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-x-10 gap-y-14">
+        {TROPHIES.map((t, i) => (
+          <Reveal key={t.label} delay={i * 0.08}>
+            <div className="group">
+              <div className="text-5xl md:text-7xl font-serif italic font-normal text-ink-900 leading-none tracking-tighter2 group-hover:text-accent transition-colors">
+                {t.counter}
+                {t.suffix && <span className="text-3xl md:text-5xl align-top">{t.suffix}</span>}
+              </div>
+              <div className="mt-4 text-ink-900 text-sm md:text-base font-medium">
+                {t.label}
+              </div>
+              <div className="text-ink-600 text-xs md:text-sm mt-1">
+                {t.sub}
+              </div>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+
+      {/* The narrative awards list under the trophies */}
+      <div className="mt-24 border-t border-ink-300/60">
+        <Row entry={{
+          company: 'The University of Queensland',
+          location: 'St Lucia',
+          role: 'Dean’s Academic Excellence Award',
+          date: '2025',
+          bullets: ['Awarded for sustained academic performance across the program — GPA 7.00 / 7.00.'],
+          tags: ['Academic'],
+        }} index={0} />
+        <Row entry={{
+          company: 'Rio Tinto',
+          location: 'Brisbane',
+          role: 'Future Leader Excellence Scholar',
+          date: '2024 — Present',
+          bullets: ['Selected as a Rio Tinto Future Leader Excellence Scholar — awarded to high-performing UQ engineering students with demonstrated leadership potential.'],
+          tags: ['Scholarship'],
+        }} index={1} />
+        <Row entry={{
+          company: 'UQ Computing Society',
+          location: 'St Lucia',
+          role: 'People’s Choice — UQCS Hackathon',
+          date: 'Aug 2024',
+          bullets: ['Led a 6-person team to the People’s Choice award for ValoStats — a predictive analytics engine for Valorant Champions 2025 ($500 prize).'],
+          tags: ['Hackathon'],
+        }} index={2} />
+      </div>
     </div>
   </div>
 );
 
 const ExperienceFeed = () => {
   return (
-    <div className="px-6 py-28 md:py-36">
-      <div className="max-w-5xl mx-auto">
-        <SectionList label="Experience"  title="Work"                  entries={WORK} />
-        <SectionList label="Community"   title="Leadership"            entries={LEADERSHIP} />
-        <SectionList label="Honours"     title="Scholarships & Awards" entries={AWARDS} />
-        <SectionList label="Study"       title="Education"             entries={EDUCATION} />
-      </div>
-    </div>
+    <>
+      <SectionList id="work"       label="Experience" title="Work."         entries={WORK} />
+      <SectionList id="leadership" label="Community"  title="Leadership."   entries={LEADERSHIP} />
+      <Awards />
+      <SectionList id="education"  label="Study"      title="Education."    entries={EDUCATION} />
+    </>
   );
 };
 

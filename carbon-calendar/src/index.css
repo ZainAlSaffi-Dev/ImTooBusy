@@ -15,6 +15,10 @@
   --accent:   #C9A36C;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body {
   width: 100%;
   max-width: 100%;

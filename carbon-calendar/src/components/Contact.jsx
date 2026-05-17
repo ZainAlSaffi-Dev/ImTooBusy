@@ -1,4 +1,5 @@
 import { ArrowUpRight, Mail, Github, Linkedin } from 'lucide-react';
+import Reveal from './Reveal';
 
 const LINKS = [
   {
@@ -23,34 +24,45 @@ const LINKS = [
 
 const Contact = ({ onOpenBooking }) => {
   return (
-    <div className="px-6 py-28 md:py-36">
-      <div className="max-w-5xl mx-auto">
+    <div id="contact" className="px-6 py-36 md:py-56">
+      <div className="max-w-6xl mx-auto">
 
-        <div className="grid md:grid-cols-12 gap-12">
+        <Reveal>
+          <span className="eyebrow">Contact</span>
+        </Reveal>
+
+        {/* Massive closing line */}
+        <Reveal delay={0.05}>
+          <h2 className="mt-4 text-6xl md:text-8xl lg:text-[8rem] font-serif italic font-normal text-ink-900 leading-[1.0] tracking-tighter2">
+            Say hello.
+          </h2>
+        </Reveal>
+
+        <div className="mt-16 grid md:grid-cols-12 gap-12">
           <div className="md:col-span-6">
-            <span className="eyebrow">Contact</span>
-            <h2 className="mt-2 text-4xl md:text-5xl font-serif italic font-normal text-ink-900 leading-tight tracking-tighter2">
-              Say hello.
-            </h2>
-            <p className="mt-6 text-ink-800 text-lg leading-relaxed max-w-reading">
-              Happy to chat about quant research, ML, software, or any of the
-              projects on this site. Easiest way is a quick 15-minute call, but
-              email works too.
-            </p>
+            <Reveal delay={0.08}>
+              <p className="text-ink-800 text-lg md:text-xl leading-relaxed max-w-reading">
+                Happy to chat about quant research, ML, software, or anything you've
+                seen on this page. Easiest way is a quick 15-minute call, but email
+                works too.
+              </p>
+            </Reveal>
 
-            <button
-              onClick={onOpenBooking}
-              className="mt-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-ink-900 text-ink-0 text-sm font-medium hover:bg-accent transition-colors group"
-            >
-              Book a chat
-              <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </button>
+            <Reveal delay={0.15}>
+              <button
+                onClick={onOpenBooking}
+                className="mt-10 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-ink-900 text-ink-0 text-sm font-medium hover:bg-accent transition-colors group"
+              >
+                Book a chat
+                <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </button>
+            </Reveal>
           </div>
 
           <div className="md:col-span-6">
             <ul className="border-t border-b border-ink-300/60 divide-y divide-ink-300/60">
-              {LINKS.map(({ label, handle, href, icon: Icon }) => (
-                <li key={label}>
+              {LINKS.map(({ label, handle, href, icon: Icon }, i) => (
+                <Reveal key={label} delay={0.1 + i * 0.06} as="li">
                   <a
                     href={href}
                     target={href.startsWith('http') ? '_blank' : undefined}
@@ -68,9 +80,12 @@ const Contact = ({ onOpenBooking }) => {
                         </div>
                       </div>
                     </div>
-                    <ArrowUpRight size={16} className="text-ink-600 group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                    <ArrowUpRight
+                      size={16}
+                      className="text-ink-600 group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"
+                    />
                   </a>
-                </li>
+                </Reveal>
               ))}
             </ul>
           </div>
