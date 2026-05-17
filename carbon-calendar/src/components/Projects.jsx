@@ -6,7 +6,7 @@ const PROJECTS = [
     id: 'imc',
     title: 'IMC Prosperity 3',
     blurb:
-      'Statistical-arb strategies on top of cointegration and Ornstein–Uhlenbeck modelling with Black–Scholes pricing and IV-curve fitting — mean-reversion, basket and options trades, with a Python visualiser for stationarity checks and live P&L.',
+      'Built statistical-arb strategies using cointegration and Ornstein–Uhlenbeck modelling with Black–Scholes pricing and IV-curve fitting to enable mean-reversion, basket and options trades; engineered a Python visualiser to automate stationarity checks and monitor live P&L.',
     headline: '9th in Australia · 60th globally (15k teams)',
     date: 'Apr 2025',
     tech: ['Python', 'pandas', 'scikit-learn', 'Black–Scholes'],
@@ -32,7 +32,7 @@ const PROJECTS = [
     title: 'ValoStats',
     blurb:
       'Led a 6-person build using Streamlit and the RIOT API to integrate real-time match data; feature engineering with Gradient Boosting + Logistic Regression predicted outcomes at 90% accuracy.',
-    headline: 'People’s Choice — UQCS Hackathon',
+    headline: 'People’s Choice, UQCS Hackathon',
     date: 'Aug 2024',
     tech: ['Streamlit', 'Gradient Boosting', 'Riot API'],
     links: {

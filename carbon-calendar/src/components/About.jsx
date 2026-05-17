@@ -3,9 +3,9 @@ import Reveal from './Reveal';
 const CURRENTLY = [
   { k: 'Working on',  v: 'GLP-1 narrative monitoring at Eucalyptus' },
   { k: 'Researching', v: 'Algorithmic governance & engagement on Meta platforms' },
-  { k: 'Teaching',    v: 'COMP3710 — Pattern Recognition (UQ)' },
-  { k: 'Reading',     v: '“Advances in Financial Machine Learning” — López de Prado' },
-  { k: 'Playing',     v: '7-string · Ibanez Prestige into a Neural DSP Gojira' },
+  { k: 'Teaching',    v: 'COMP3710 / Pattern Recognition (UQ)' },
+  { k: 'Reading',     v: '“Advances in Financial Machine Learning” by López de Prado' },
+  { k: 'Playing',     v: 'Legator Ninja Alex Terrible signature · Neural DSP Gojira' },
   { k: 'Listening',   v: 'BabyMetal · In Flames · Electric Callboy · low-tuned things' },
   { k: 'Wearing',     v: 'PDM Althair in winter, Pacific Chill in summer' },
 ];
@@ -31,20 +31,20 @@ const About = () => {
           <div className="md:col-span-7 space-y-6 text-ink-800 text-lg md:text-xl leading-relaxed max-w-reading">
             <Reveal delay={0.05}>
               <p>
-                I'm still in the&nbsp;
-                <span className="text-ink-900">figuring-it-out</span> phase — an engineering student at UQ
+                I'm still very much in the&nbsp;
+                <span className="text-ink-900">figuring-it-out</span> phase: an engineering student at UQ
                 spending my undergrad sampling industries that look hard from the outside. Trading desks,
-                healthtech, autonomous racing, a stint in insolvency law. Most of what I do lives somewhere
-                between markets, models and machines.
+                healthtech, autonomous racing, a recent stint in insolvency law. Most of what I do sits
+                somewhere between markets, models and machines, and I'm pretty happy with that.
               </p>
             </Reveal>
             <Reveal delay={0.12}>
               <p>
-                Outside the terminal I play 7-string guitar (mostly metal — BabyMetal, In Flames,
-                Electric Callboy, plus whatever's tuned the lowest that week), spend more time than is
-                probably reasonable on niche fragrances, and have a real soft spot for pro bono law —
-                there's a thrill in standing up for people who can't defend themselves. The
-                long-term plan involves bionics and Alzheimer's, but that's a conversation for another day.
+                Outside the terminal I play 7-string guitar, mostly metal: BabyMetal, In Flames,
+                Electric Callboy, plus whatever's tuned the lowest that week. I spend more time than
+                is probably reasonable on niche fragrances, and I've got a real soft spot for pro bono law.
+                There's a thrill in standing up for people who can't defend themselves. The long-term
+                plan involves bionics and Alzheimer's, but that's a conversation for another day.
               </p>
             </Reveal>
           </div>

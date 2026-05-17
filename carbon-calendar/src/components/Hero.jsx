@@ -37,7 +37,7 @@ const Hero = ({ onOpenBooking }) => {
           <Word index={1} className="font-sans font-medium">Al-Saffi.</Word>
         </h1>
 
-        {/* Subtitle — masked too, slightly later */}
+        {/* Subtitle */}
         <h2 className="mt-3 md:mt-5 text-3xl md:text-5xl lg:text-6xl leading-[1.08] tracking-tightish text-ink-700 font-light">
           <Word index={3} className="font-sans">Engineering&nbsp;</Word>
           <Word index={4} className="font-sans">student&nbsp;</Word>
@@ -45,7 +45,7 @@ const Hero = ({ onOpenBooking }) => {
           <Word index={6} className="font-sans text-ink-900">UQ.</Word>
         </h2>
 
-        {/* Paragraph fades in after the words land */}
+        {/* Paragraph — no em-dashes, more personal */}
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -53,15 +53,16 @@ const Hero = ({ onOpenBooking }) => {
           className="mt-14 max-w-reading text-lg md:text-xl text-ink-700 leading-relaxed"
         >
           Currently studying Engineering &amp; Software at the&nbsp;
-          <span className="text-ink-900">University of Queensland</span> —
-          bouncing between <span className="text-ink-900">quant research</span>,&nbsp;
+          <span className="text-ink-900">University of Queensland</span>.
+          Most weeks I'm bouncing between&nbsp;
+          <span className="text-ink-900">quant research</span>,&nbsp;
           <span className="text-ink-900">ML</span>,&nbsp;
           <span className="text-ink-900">autonomous systems</span>&nbsp;
           <span className="font-serif italic text-accent">and the odd legal detour</span>.
-          Off to <span className="text-ink-900">Optiver</span> in Sydney at the end of
-          the year, growth-engineering at <span className="text-ink-900">Eucalyptus</span>{' '}
-          in between, and tutoring deep learning on the side. I like difficult problems
-          with real numbers attached — and the occasional break from staring at them.
+          Heading to <span className="text-ink-900">Optiver</span> in Sydney at the end of the year,
+          growth-engineering at <span className="text-ink-900">Eucalyptus</span> in the meantime,
+          and tutoring deep learning on the side. I like difficult problems with real numbers
+          attached, and I'm not bad at taking breaks from staring at them either.
         </motion.p>
 
         {/* CTAs */}
@@ -81,7 +82,7 @@ const Hero = ({ onOpenBooking }) => {
           <span className="text-sm text-ink-600">or just keep scrolling.</span>
         </motion.div>
 
-        {/* Quiet facts row — counters animate when in view */}
+        {/* Facts row — order: GPA, Next stop, Right now, Society */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -99,14 +100,14 @@ const Hero = ({ onOpenBooking }) => {
             sub="Sydney · Dec 2026"
           />
           <Fact
+            label="Right now"
+            value="Eucalyptus"
+            sub="AI Growth · Brisbane"
+          />
+          <Fact
             label="Society"
             value="UQCS"
             sub="President 2026"
-          />
-          <Fact
-            label="Shipped"
-            value={<AnimatedCounter to={1000} suffix="+ DL" />}
-            sub="BlackBoxLabs · VSCode"
           />
         </motion.div>
       </div>

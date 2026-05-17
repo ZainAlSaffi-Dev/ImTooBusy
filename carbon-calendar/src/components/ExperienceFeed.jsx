@@ -6,17 +6,17 @@ const WORK = [
     company: 'Optiver',
     location: 'Sydney',
     role: 'Quantitative Research Intern (incoming)',
-    date: 'Dec 2026 — Feb 2027',
+    date: 'Dec 2026 – Feb 2027',
     bullets: [],
-    tags: ['Quant Research', 'Probability', 'C++'],
+    tags: ['Quant Research', 'Probability', 'Statistics'],
   },
   {
     company: 'Optiver',
     location: 'Sydney',
     role: 'FutureFocus Program & Campus Ambassador',
-    date: 'Sep 2025 — Present',
+    date: 'Sep 2025 – Present',
     bullets: [
-      'Selected as the first student in the program’s history to receive two offers from both available streams simultaneously — Quantitative Research and Software Engineering.',
+      'Selected as the first student in the program’s history to receive two offers from both available streams simultaneously (Quantitative Research and Software Engineering).',
       'Lead Optiver’s presence at UQ careers fairs and workshops; serve as the UQ liaison converting student interest into candidate pipelines.',
     ],
     tags: ['Recruitment', 'Public Speaking'],
@@ -25,10 +25,10 @@ const WORK = [
     company: 'Eucalyptus',
     location: 'Brisbane',
     role: 'AI Growth Intern',
-    date: 'Apr 2026 — Present',
+    date: 'Apr 2026 – Present',
     bullets: [
-      'Engineered a multi-source GLP-1 sentiment monitoring pipeline ingesting Reddit, Facebook and news APIs with lift-score & word-frequency analysis to surface emerging narrative trends; implemented threshold-based alerts notifying marketing leadership to enable first-mover campaign positioning.',
-      'Conducted Spearman rank correlation and regression analysis on unconverted patient survey data, linking side-effect sentiment to patient funnel stage — statistical findings that completely pivoted the firm’s marketing strategy.',
+      'Engineered a multi-source GLP-1 sentiment monitoring pipeline ingesting Reddit, Facebook and news APIs with lift-score and word-frequency analysis to surface emerging narrative trends; implemented threshold-based automated alerts to notify marketing leadership, enabling first-mover campaign positioning.',
+      'Conducted Spearman rank correlation and regression analysis on unconverted patient survey data, linking side-effect sentiment to patient funnel stage to deliver statistical findings that completely pivoted the firm’s marketing strategy.',
     ],
     tags: ['Python', 'NLP', 'Statistics', 'Reddit / Meta APIs'],
   },
@@ -36,7 +36,7 @@ const WORK = [
     company: 'University of Queensland',
     location: 'St Lucia',
     role: 'Research Assistant',
-    date: 'Oct 2025 — Present',
+    date: 'Oct 2025 – Present',
     bullets: [
       'Implemented Meta Content Library API querying via asynchronous batch endpoints with rolling Z-score anomaly detection to identify statistically significant engagement surges across three Facebook groups; research findings contributed to Who Decides the Transition? Governance and Legitimacy in Offshore Wind Development.',
       'Developed end-to-end NLP pipeline using pandas with custom sentiment lexicon and lift-score word-frequency analysis; computed Spearman rank correlations to measure recommendation-algorithm amplification bias across oppositional and pro-development discourse communities.',
@@ -46,8 +46,8 @@ const WORK = [
   {
     company: 'University of Queensland',
     location: 'St Lucia',
-    role: 'Casual Academic Tutor — COMP3710',
-    date: 'Jun 2025 — Present',
+    role: 'Casual Academic Tutor (COMP3710)',
+    date: 'Jun 2025 – Present',
     bullets: [
       'Pattern Recognition and Analysis: instruct 20+ students weekly on machine and deep-learning models and techniques.',
     ],
@@ -57,7 +57,7 @@ const WORK = [
     company: 'University of Queensland',
     location: 'St Lucia',
     role: 'Future Students & Student Services Ambassador',
-    date: 'Mar 2025 — Present',
+    date: 'Mar 2025 – Present',
     bullets: [
       'Represent the university and EAIT faculty in school expos, talks and careers fairs to guide prospective students in degree selection.',
     ],
@@ -67,7 +67,7 @@ const WORK = [
     company: 'SVPartners',
     location: 'Brisbane',
     role: 'Insolvency Law Intern',
-    date: 'Feb 2026 — Mar 2026',
+    date: 'Feb 2026 – Mar 2026',
     bullets: [
       'Applied the IRAC framework to synthesise provisions from the Bankruptcy Act 1966 and Corporations Act 2001, facilitating the adjudication of creditor claims and ensuring compliance with evidentiary requirements for statutory filings.',
       'Conducted legal research into insolvency case law and ex parte procedural requirements to evaluate the validity of corporate documentation, managing the accurate administration of insolvent estates within the Insolv platform.',
@@ -78,7 +78,7 @@ const WORK = [
     company: 'Thiess',
     location: 'South Bank',
     role: 'Data Science Intern',
-    date: 'Dec 2024 — Feb 2025',
+    date: 'Dec 2024 – Feb 2025',
     bullets: [
       'Developed a statistical learning state machine using Gaussian Mixture Models and IMM-EKF for real-time truck operation classification and sensor fusion, enhancing reliability and reducing costs by 20%.',
       'Conducted extensive data cleaning and feature engineering using PySpark, SQL and Jupyter Notebooks, including joining disparate telemetry datasets and modelling sensor noise.',
@@ -90,7 +90,7 @@ const WORK = [
     company: 'UQ Racing',
     location: 'St Lucia',
     role: 'Lead Software Engineer',
-    date: 'Nov 2024 — Jun 2025',
+    date: 'Nov 2024 – Jun 2025',
     bullets: [
       'Led ROS-to-ROS2 migration in Python and C++, integrating TensorRT-quantised YOLOv11 for faster, more accurate cone detection in real-time autonomous navigation.',
       'Built a Dockerised ROS2-Gazebo simulation environment enabling remote development and virtual testing, boosting testing availability by 80% and accelerating R&D deployment.',
@@ -102,7 +102,7 @@ const WORK = [
     company: 'UQ Racing',
     location: 'St Lucia',
     role: 'Software Engineer',
-    date: 'Feb 2024 — Nov 2024',
+    date: 'Feb 2024 – Nov 2024',
     bullets: [
       'Developed path-planning algorithms using a perception stack integrating YOLOv8, Lidar and INS data with Delaunay Triangulation for track driving.',
     ],
@@ -117,8 +117,8 @@ const LEADERSHIP = [
     role: 'President',
     date: '2026',
     bullets: [
-      'Leading end-to-end operations for 2,000+ members — events, sponsorship, and technical programming.',
-      'Secured $30k+ in sponsorship (largest in society history) and shipped a centralised project-management framework for logistics & budgeting.',
+      'Leading end-to-end operations for 2,000+ members across events, sponsorship and technical programming.',
+      'Secured $30k+ in sponsorship (largest in society history) and shipped a centralised project-management framework for logistics and budgeting.',
     ],
     tags: ['Leadership', 'Sponsorship'],
   },
@@ -138,8 +138,8 @@ const EDUCATION = [
   {
     company: 'The University of Queensland',
     location: 'St Lucia',
-    role: 'B.Eng / M.Eng — Software Specialisation',
-    date: 'Feb 2024 — Nov 2028',
+    role: 'B.Eng / M.Eng in Software Engineering',
+    date: 'Feb 2024 – Nov 2028',
     bullets: [
       'GPA 7.00 / 7.00 · Dean’s Academic Excellence Award 2025 · Rio Tinto Future Leader Excellence Scholar.',
     ],
@@ -152,19 +152,19 @@ const TROPHIES = [
   {
     counter: <AnimatedCounter to={9} />,
     suffix: 'th',
-    label: 'IMC Prosperity 3 — Australia',
+    label: 'IMC Prosperity 3, Australia',
     sub: 'Algorithm category · 15,000 teams',
   },
   {
     counter: <AnimatedCounter to={60} />,
     suffix: 'th',
-    label: 'IMC Prosperity 3 — Global',
+    label: 'IMC Prosperity 3, globally',
     sub: 'Top 0.4% of all teams',
   },
   {
-    counter: <AnimatedCounter to={98.98} decimals={2} suffix="%" />,
-    label: 'BlackBoxLabs accuracy',
-    sub: 'AI-generated code detection',
+    counter: <AnimatedCounter to={1000} suffix="+" />,
+    label: 'BlackBoxLabs downloads',
+    sub: 'VSCode Marketplace · GitHub App',
   },
   {
     counter: <AnimatedCounter to={30} prefix="$" suffix="k+" />,
@@ -280,23 +280,23 @@ const Awards = () => (
           location: 'St Lucia',
           role: 'Dean’s Academic Excellence Award',
           date: '2025',
-          bullets: ['Awarded for sustained academic performance across the program — GPA 7.00 / 7.00.'],
+          bullets: ['Awarded for sustained academic performance across the program. GPA 7.00 / 7.00.'],
           tags: ['Academic'],
         }} index={0} />
         <Row entry={{
           company: 'Rio Tinto',
           location: 'Brisbane',
           role: 'Future Leader Excellence Scholar',
-          date: '2024 — Present',
-          bullets: ['Selected as a Rio Tinto Future Leader Excellence Scholar — awarded to high-performing UQ engineering students with demonstrated leadership potential.'],
+          date: '2024 – Present',
+          bullets: ['Selected as a Rio Tinto Future Leader Excellence Scholar, awarded to high-performing UQ engineering students with demonstrated leadership potential.'],
           tags: ['Scholarship'],
         }} index={1} />
         <Row entry={{
           company: 'UQ Computing Society',
           location: 'St Lucia',
-          role: 'People’s Choice — UQCS Hackathon',
+          role: 'People’s Choice, UQCS Hackathon',
           date: 'Aug 2024',
-          bullets: ['Led a 6-person team to the People’s Choice award for ValoStats — a predictive analytics engine for Valorant Champions 2025 ($500 prize).'],
+          bullets: ['Led a 6-person team to the People’s Choice award for ValoStats, a predictive analytics engine for Valorant Champions 2025 ($500 prize).'],
           tags: ['Hackathon'],
         }} index={2} />
       </div>

@@ -282,7 +282,7 @@ const BookingModal = ({ isOpen, onClose }) => {
                 friendToken ? (
                   <div className="bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 rounded-lg mb-4 flex items-center gap-3">
                     <Zap className="text-emerald-400 shrink-0" size={16} />
-                    <p className="text-sm text-emerald-200">VIP access — weekends visible</p>
+                    <p className="text-sm text-emerald-200">VIP access · weekends visible</p>
                   </div>
                 ) : (
                   <div className="bg-amber-500/10 border border-amber-500/30 px-4 py-3 rounded-lg mb-4 flex items-center justify-between gap-3">
