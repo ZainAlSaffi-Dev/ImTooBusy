@@ -1,4 +1,4 @@
-// Editorial list of work + leadership.
+// Editorial list of work, leadership, awards and education.
 // No timeline dots, no neon, no card chrome — just a clean tabular layout.
 
 const WORK = [
@@ -7,9 +7,7 @@ const WORK = [
     location: 'Sydney',
     role: 'Quantitative Research Intern (incoming)',
     date: 'Dec 2026 — Feb 2027',
-    bullets: [
-      'Selected as the first student in the program’s history to receive offers from both available streams simultaneously — Quantitative Research and Software Engineering.',
-    ],
+    bullets: [],
     tags: ['Quant Research', 'Probability', 'C++'],
   },
   {
@@ -18,6 +16,7 @@ const WORK = [
     role: 'FutureFocus Program & Campus Ambassador',
     date: 'Sep 2025 — Present',
     bullets: [
+      'Selected as the first student in the program’s history to receive two offers from both available streams simultaneously — Quantitative Research and Software Engineering.',
       'Lead Optiver’s presence at UQ careers fairs and workshops; serve as the UQ liaison converting student interest into candidate pipelines.',
     ],
     tags: ['Recruitment', 'Public Speaking'],
@@ -28,8 +27,8 @@ const WORK = [
     role: 'AI Growth Intern',
     date: 'Apr 2026 — Present',
     bullets: [
-      'Engineered a multi-source GLP-1 sentiment monitoring pipeline ingesting Reddit, Facebook and news APIs with lift-score & word-frequency analysis to surface emerging narrative trends; implemented threshold-based alerts notifying marketing leadership to enable first-mover positioning.',
-      'Conducted Spearman rank correlation and regression analysis on unconverted patient survey data, linking side-effect sentiment to funnel stage — findings pivoted the firm’s marketing strategy.',
+      'Engineered a multi-source GLP-1 sentiment monitoring pipeline ingesting Reddit, Facebook and news APIs with lift-score & word-frequency analysis to surface emerging narrative trends; implemented threshold-based alerts notifying marketing leadership to enable first-mover campaign positioning.',
+      'Conducted Spearman rank correlation and regression analysis on unconverted patient survey data, linking side-effect sentiment to patient funnel stage — statistical findings that completely pivoted the firm’s marketing strategy.',
     ],
     tags: ['Python', 'NLP', 'Statistics', 'Reddit / Meta APIs'],
   },
@@ -39,8 +38,8 @@ const WORK = [
     role: 'Research Assistant',
     date: 'Oct 2025 — Present',
     bullets: [
-      'Implemented Meta Content Library API querying via asynchronous batch endpoints with rolling Z-score anomaly detection across three Facebook groups; findings contributed to Who Decides the Transition? Governance and Legitimacy in Offshore Wind Development.',
-      'Built an end-to-end NLP pipeline with a custom sentiment lexicon and lift-score word-frequency analysis; computed Spearman rank correlations to measure recommendation-algorithm amplification bias across oppositional and pro-development discourse communities.',
+      'Implemented Meta Content Library API querying via asynchronous batch endpoints with rolling Z-score anomaly detection to identify statistically significant engagement surges across three Facebook groups; research findings contributed to Who Decides the Transition? Governance and Legitimacy in Offshore Wind Development.',
+      'Developed end-to-end NLP pipeline using pandas with custom sentiment lexicon and lift-score word-frequency analysis; computed Spearman rank correlations to measure recommendation-algorithm amplification bias across oppositional and pro-development discourse communities.',
     ],
     tags: ['Python', 'NLP', 'Meta API', 'Pandas'],
   },
@@ -50,7 +49,7 @@ const WORK = [
     role: 'Casual Academic Tutor — COMP3710',
     date: 'Jun 2025 — Present',
     bullets: [
-      'Instruct 20+ students weekly on machine and deep-learning models and techniques in Pattern Recognition & Analysis.',
+      'Pattern Recognition and Analysis: instruct 20+ students weekly on machine and deep-learning models and techniques.',
     ],
     tags: ['Teaching', 'Deep Learning'],
   },
@@ -60,7 +59,7 @@ const WORK = [
     role: 'Future Students & Student Services Ambassador',
     date: 'Mar 2025 — Present',
     bullets: [
-      'Represent the university and EAIT faculty at school expos, talks and careers fairs, guiding prospective students through degree selection.',
+      'Represent the university and EAIT faculty in school expos, talks and careers fairs to guide prospective students in degree selection.',
     ],
     tags: ['Public Relations', 'Student Services'],
   },
@@ -82,7 +81,7 @@ const WORK = [
     date: 'Dec 2024 — Feb 2025',
     bullets: [
       'Developed a statistical learning state machine using Gaussian Mixture Models and IMM-EKF for real-time truck operation classification and sensor fusion, enhancing reliability and reducing costs by 20%.',
-      'Conducted extensive data cleaning and feature engineering with PySpark, SQL and Jupyter, joining disparate telemetry datasets and modelling sensor noise.',
+      'Conducted extensive data cleaning and feature engineering using PySpark, SQL and Jupyter Notebooks, including joining disparate telemetry datasets and modelling sensor noise.',
       'Developed a linear model to correct timestamp misalignment, ensuring synchronisation across data sources.',
     ],
     tags: ['PySpark', 'SQL', 'GMM / IMM-EKF', 'Azure Databricks'],
@@ -135,6 +134,59 @@ const LEADERSHIP = [
   },
 ];
 
+const AWARDS = [
+  {
+    company: 'The University of Queensland',
+    location: 'St Lucia',
+    role: 'Dean’s Academic Excellence Award',
+    date: '2025',
+    bullets: [
+      'Awarded for sustained academic performance across the program — GPA 7.00 / 7.00.',
+    ],
+    tags: ['Academic'],
+  },
+  {
+    company: 'Rio Tinto',
+    location: 'Brisbane',
+    role: 'Future Leader Excellence Scholar',
+    date: '2024 — Present',
+    bullets: [
+      'Selected as a Rio Tinto Future Leader Excellence Scholar — awarded to high-performing UQ engineering students with demonstrated leadership potential.',
+    ],
+    tags: ['Scholarship'],
+  },
+  {
+    company: 'IMC Trading',
+    location: 'Global',
+    role: 'IMC Prosperity 3 — 9th AU, 60th globally',
+    date: 'Apr 2025',
+    bullets: [
+      'Top 0.4% of 15,000 teams in the algorithm category of IMC’s global trading competition.',
+    ],
+    tags: ['Competition', 'Trading'],
+  },
+  {
+    company: 'IMC Trading',
+    location: 'Online',
+    role: 'AlgoJam — 3rd place',
+    date: 'Sep 2024',
+    bullets: [
+      'Third place in IMC-sponsored AlgoJam — pairs trading and ARIMA time-series analysis across simulated markets.',
+    ],
+    tags: ['Competition'],
+  },
+  {
+    company: 'UQ Computing Society',
+    location: 'St Lucia',
+    role: 'People’s Choice — UQCS Hackathon',
+    date: 'Aug 2024',
+    bullets: [
+      'Led a 6-person team to the People’s Choice award for ValoStats — a predictive analytics engine for Valorant Champions 2025 ($500 prize).',
+    ],
+    tags: ['Hackathon'],
+  },
+];
+
 const EDUCATION = [
   {
     company: 'The University of Queensland',
@@ -169,14 +221,16 @@ const Row = ({ entry }) => (
         </span>
       </h3>
 
-      <ul className="mt-4 space-y-3 text-ink-800 text-[15px] leading-relaxed max-w-reading">
-        {entry.bullets.map((b, i) => (
-          <li key={i} className="relative pl-4">
-            <span className="absolute left-0 top-2.5 w-1.5 h-px bg-ink-500" />
-            {b}
-          </li>
-        ))}
-      </ul>
+      {entry.bullets.length > 0 && (
+        <ul className="mt-4 space-y-3 text-ink-800 text-[15px] leading-relaxed max-w-reading">
+          {entry.bullets.map((b, i) => (
+            <li key={i} className="relative pl-4">
+              <span className="absolute left-0 top-2.5 w-1.5 h-px bg-ink-500" />
+              {b}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="mt-5 flex flex-wrap gap-2">
         {entry.tags.map((t) => (
@@ -218,9 +272,10 @@ const ExperienceFeed = () => {
   return (
     <div className="px-6 py-28 md:py-36">
       <div className="max-w-5xl mx-auto">
-        <SectionList label="Experience"  title="Work"        entries={WORK} />
-        <SectionList label="Community"   title="Leadership"  entries={LEADERSHIP} />
-        <SectionList label="Study"       title="Education"   entries={EDUCATION} />
+        <SectionList label="Experience"  title="Work"                  entries={WORK} />
+        <SectionList label="Community"   title="Leadership"            entries={LEADERSHIP} />
+        <SectionList label="Honours"     title="Scholarships & Awards" entries={AWARDS} />
+        <SectionList label="Study"       title="Education"             entries={EDUCATION} />
       </div>
     </div>
   );

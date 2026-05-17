@@ -8,27 +8,31 @@ const Hero = ({ onOpenBooking }) => {
         {/* Eyebrow */}
         <div className="flex items-center gap-3 mb-10">
           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-          <span className="eyebrow">Brisbane, AU · Available Apr&nbsp;2026 →</span>
+          <span className="eyebrow">Brisbane, AU · Generally up for a chat</span>
         </div>
 
-        {/* Name + intro — editorial, mixed serif/sans */}
+        {/* Name + intro — editorial, mixed serif/sans, no "quant" label */}
         <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.02] tracking-tighter2 text-ink-900 max-w-4xl">
           <span className="font-serif italic font-normal text-ink-900">Zain</span>{' '}
           <span className="font-sans font-medium">Al-Saffi.</span>
           <br />
           <span className="text-ink-700 font-sans font-light">
-            Quant &amp; software engineer building<br className="hidden md:block" /> systems that&nbsp;
-            <span className="font-serif italic text-accent">think</span> in markets&nbsp;and&nbsp;data.
+            Engineering student at UQ, bouncing between<br className="hidden md:block" />{' '}
+            <span className="text-ink-900">quant research</span>,&nbsp;
+            <span className="text-ink-900">ML</span>,&nbsp;
+            <span className="text-ink-900">autonomous systems</span>&nbsp;
+            <span className="font-serif italic text-accent">and the odd legal detour</span>.
           </span>
         </h1>
 
         {/* One-paragraph intro */}
         <p className="mt-12 max-w-reading text-lg text-ink-700 leading-relaxed">
-          Engineering &amp; software student at the University of Queensland — heading to{' '}
-          <span className="text-ink-900">Optiver</span> as a Quantitative Researcher,
-          and currently growth-engineering at{' '}
-          <span className="text-ink-900">Eucalyptus</span>.
-          I like difficult problems with real numbers attached.
+          Currently studying Engineering &amp; Software at the&nbsp;
+          <span className="text-ink-900">University of Queensland</span>.
+          Off to <span className="text-ink-900">Optiver</span> in Sydney at the end of
+          the year, growth-engineering at <span className="text-ink-900">Eucalyptus</span>{' '}
+          in between, and tutoring deep learning on the side. I like difficult problems
+          with real numbers attached — and the occasional break from staring at them.
         </p>
 
         {/* Quick CTAs */}
@@ -50,10 +54,10 @@ const Hero = ({ onOpenBooking }) => {
 
         {/* Quiet facts row */}
         <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-8 max-w-3xl">
-          <Fact label="GPA" value="7.00 / 7.00" sub="Dean's Excellence 2025" />
-          <Fact label="Next stop" value="Optiver" sub="Quant Research · Dec 2026" />
-          <Fact label="Society" value="UQCS" sub="President 2026" />
-          <Fact label="Built" value="1,000+ DL" sub="BlackBoxLabs · VSCode" />
+          <Fact label="GPA"       value="7.00 / 7.00" sub="Dean's Excellence 2025" />
+          <Fact label="Next stop" value="Optiver"     sub="Sydney · Dec 2026" />
+          <Fact label="Society"   value="UQCS"        sub="President 2026" />
+          <Fact label="Shipped"   value="1,000+ DL"   sub="BlackBoxLabs · VSCode" />
         </div>
       </div>
     </section>
@@ -61,9 +65,11 @@ const Hero = ({ onOpenBooking }) => {
 };
 
 const Fact = ({ label, value, sub }) => (
-  <div>
+  <div className="group">
     <div className="eyebrow mb-2">{label}</div>
-    <div className="text-ink-900 text-xl tracking-tightish">{value}</div>
+    <div className="text-ink-900 text-xl tracking-tightish group-hover:text-accent transition-colors">
+      {value}
+    </div>
     <div className="text-ink-600 text-xs mt-0.5">{sub}</div>
   </div>
 );
